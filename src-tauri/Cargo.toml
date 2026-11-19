@@ -1,0 +1,47 @@
+[package]
+name        = "vera"
+version     = "0.1.0"
+description = "Vera Bible Study"
+authors     = ["you"]
+license     = ""
+repository  = ""
+edition     = "2024"
+rust-version = "1.90"
+
+[lib]
+name       = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[features]
+# The desktop build reads native CrossWire SWORD modules by default.
+# Build without them using `--no-default-features`.
+default      = ["native-sword"]
+native-sword = ["bible-engine/native-sword"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.6", features = [] }
+
+[dependencies]
+# Tauri
+tauri            = { version = "2.12.7", features = [] }
+tauri-plugin-log = "2"
+log              = "0.4"
+
+# Workspace deps
+serde            = { workspace = true }
+serde_json       = { workspace = true }
+tokio            = { workspace = true }
+tracing          = { workspace = true }
+uuid             = { workspace = true }
+chrono           = { workspace = true }
+
+# Tracing subscriber (not in workspace — only needed here)
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Local crates
+bible-core      = { path = "../crates/bible-core" }
+bible-engine    = { path = "../crates/bible-engine" }
+module-manager  = { path = "../crates/module-manager" }
+search-engine   = { path = "../crates/search-engine" }
+text-parser     = { path = "../crates/text-parser" }
+persistence     = { path = "../crates/persistence" }

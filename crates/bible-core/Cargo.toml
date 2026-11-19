@@ -1,0 +1,12 @@
+[package]
+name    = "bible-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }
+chrono     = { workspace = true }
+# uuid removed: id fields are stored and transported as String to avoid
+# trait-resolution conflicts with the uuid forks used by some optional deps.

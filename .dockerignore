@@ -1,0 +1,12 @@
+.git
+.gitignore
+.angular
+.vscode
+node_modules
+target
+dist
+src-tauri/gen
+src-tauri/target
+*.md
+.DS_Store
+Thumbs.db

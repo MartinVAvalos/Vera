@@ -1,0 +1,42 @@
+<div class="app-shell">
+  <app-title-bar />
+
+  <div class="app-body">
+    <app-nav-rail />
+
+    <as-split direction="horizontal" class="main-split" [gutterSize]="4">
+
+      @if (state.sidebarOpen()) {
+        <as-split-area [size]="20" [minSize]="14" [maxSize]="35">
+          <aside class="sidebar-panel">
+            @switch (state.activeSidebarTab()) {
+              @case ('library')   { <app-library-panel /> }
+              @case ('install')   { <app-install-modules /> }
+              @case ('search')    { <app-search-panel /> }
+              @case ('bookmarks') { <app-bookmarks-panel /> }
+              @case ('notes')     { <app-notes-panel /> }
+              @case ('settings')  { <app-settings-panel /> }
+            }
+          </aside>
+        </as-split-area>
+      }
+
+      <as-split-area [size]="state.commentaryOpen() ? 55 : 80" [minSize]="30">
+        <main class="reader-area">
+          <app-reader-area />
+        </main>
+      </as-split-area>
+
+      @if (state.commentaryOpen()) {
+        <as-split-area [size]="25" [minSize]="16" [maxSize]="45">
+          <aside class="commentary-panel">
+            <app-commentary-panel />
+          </aside>
+        </as-split-area>
+      }
+
+    </as-split>
+  </div>
+
+  <app-status-bar />
+</div>
