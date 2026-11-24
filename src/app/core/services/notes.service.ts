@@ -24,8 +24,8 @@ export class NotesService {
     return invoke<Bookmark[]>('get_bookmarks');
   }
 
-  saveBookmark(book: string, chapter: number, verse: number, label: string): Promise<void> {
-    return invoke<void>('save_bookmark', { book, chapter, verse, label });
+  saveBookmark(id: string, book: string, chapter: number, verse: number, label: string): Promise<Bookmark> {
+    return invoke<Bookmark>('save_bookmark', { id, book, chapter, verse, label });
   }
 
   deleteBookmark(id: string): Promise<void> {

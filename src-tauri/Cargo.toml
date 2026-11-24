@@ -45,3 +45,7 @@ module-manager  = { path = "../crates/module-manager" }
 search-engine   = { path = "../crates/search-engine" }
 text-parser     = { path = "../crates/text-parser" }
 persistence     = { path = "../crates/persistence" }
+
+[dev-dependencies]
+# Mock runtime, so tests can drive commands through the real IPC layer.
+tauri = { version = "2.12.7", features = ["test"] }

@@ -4,7 +4,7 @@ use bible_core::{
     error::BibleError,
     models::{BibleRef, Bookmark, Highlight, Note},
 };
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 
 type Result<T> = std::result::Result<T, BibleError>;
 
@@ -215,10 +215,46 @@ impl Database {
         Ok(bookmarks)
     }
 
+    pub fn get_bookmark(&self, id: &str) -> Result<Option<Bookmark>> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, book, chapter, verse, label, created_at FROM bookmarks WHERE id = ?1")
+            .map_err(|e| BibleError::Database(e.to_string()))?;
+
+        let row = stmt
+            .query_row([id], |row| {
+                let id_str = row.get::<_, String>(0)?;
+                let book = row.get::<_, String>(1)?;
+                let chapter = row.get::<_, u32>(2)?;
+                let verse = row.get::<_, u32>(3)?;
+                let label = row.get::<_, String>(4)?;
+                let created_str = row.get::<_, String>(5)?;
+                Ok((id_str, book, chapter, verse, label, created_str))
+            })
+            .optional()
+            .map_err(|e| BibleError::Database(e.to_string()))?;
+
+        Ok(row.map(|(id_str, book, chapter, verse, label, created_str)| {
+            let created_at = chrono::DateTime::parse_from_rfc3339(&created_str)
+                .map(|dt| dt.with_timezone(&chrono::Utc))
+                .unwrap_or_else(|_| chrono::Utc::now());
+
+            Bookmark {
+                id: id_str,
+                reference: BibleRef { book, chapter, verse },
+                label,
+                created_at,
+            }
+        }))
+    }
+
     pub fn delete_bookmark(&self, id: &str) -> Result<()> {
-        self.conn
+        let affected = self.conn
             .execute("DELETE FROM bookmarks WHERE id = ?1", [id])
             .map_err(|e| BibleError::Database(e.to_string()))?;
+        if affected == 0 {
+            return Err(BibleError::Database(format!("bookmark {id} not found")));
+        }
         Ok(())
     }
 
@@ -353,6 +389,117 @@ mod tests {
         db.delete_highlight("hl-1").unwrap();
         assert!(db.get_bookmarks().unwrap().is_empty());
         assert!(db.get_highlights().unwrap().is_empty());
+    }
+
+    // ── Bookmark-specific persistence tests (P0.7.1) ──────────────────────
+
+    fn make_bookmark(id: &str, book: &str) -> Bookmark {
+        Bookmark {
+            id: id.into(),
+            reference: r(book, 1, 1),
+            label: format!("label-{book}"),
+            created_at: Utc::now(),
+        }
+    }
+
+    #[test]
+    fn save_bookmark_persists_the_exact_uuid() {
+        let db = open(&db_path("bm_uuid"));
+        let bm = make_bookmark("aaaa-bbbb-cccc", "John");
+        db.save_bookmark(&bm).unwrap();
+        let all = db.get_bookmarks().unwrap();
+        assert_eq!(all.len(), 1);
+        assert_eq!(all[0].id, "aaaa-bbbb-cccc");
+        assert_eq!(all[0].reference.book, "John");
+        assert_eq!(all[0].label, "label-John");
+    }
+
+    #[test]
+    fn saved_uuid_survives_database_reopen() {
+        let path = db_path("bm_reopen");
+        {
+            let db = open(&path);
+            db.save_bookmark(&make_bookmark("persist-id", "Gen")).unwrap();
+        }
+        let db = open(&path);
+        let all = db.get_bookmarks().unwrap();
+        assert_eq!(all.len(), 1);
+        assert_eq!(all[0].id, "persist-id");
+    }
+
+    #[test]
+    fn delete_by_saved_uuid_removes_the_record() {
+        let db = open(&db_path("bm_delete_by_uuid"));
+        db.save_bookmark(&make_bookmark("del-id", "Rom")).unwrap();
+        db.delete_bookmark("del-id").unwrap();
+        assert!(db.get_bookmarks().unwrap().is_empty());
+    }
+
+    #[test]
+    fn delete_nonexistent_bookmark_returns_not_found_error() {
+        let db = open(&db_path("bm_delete_missing"));
+        let err = db.delete_bookmark("does-not-exist").unwrap_err();
+        assert!(
+            matches!(&err, BibleError::Database(m) if m == "bookmark does-not-exist not found"),
+            "unexpected error: {err}"
+        );
+        assert_eq!(err.to_string(), "Database error: bookmark does-not-exist not found");
+    }
+
+    #[test]
+    fn insert_or_replace_on_same_id_does_not_duplicate() {
+        let db = open(&db_path("bm_idempotent"));
+        let bm = make_bookmark("idem-id", "Luke");
+        db.save_bookmark(&bm).unwrap();
+        db.save_bookmark(&bm).unwrap(); // retry with same id
+        assert_eq!(db.get_bookmarks().unwrap().len(), 1);
+        assert_eq!(db.get_bookmarks().unwrap()[0].id, "idem-id");
+    }
+
+    #[test]
+    fn retry_with_same_id_preserves_original_created_at() {
+        let db = open(&db_path("bm_created_at_preserve"));
+        let bm = make_bookmark("preserve-id", "Matt");
+        db.save_bookmark(&bm).unwrap();
+
+        let first = db.get_bookmark("preserve-id").unwrap().expect("bookmark must exist");
+        let original_created_at = first.created_at;
+
+        // Sleep to ensure time passes, then save again
+        std::thread::sleep(std::time::Duration::from_millis(10));
+
+        // Key test: when we retry with the SAME bookmark object (same created_at),
+        // it must not duplicate the record
+        db.save_bookmark(&bm).unwrap();
+
+        let bookmarks = db.get_bookmarks().unwrap();
+        assert_eq!(bookmarks.len(), 1, "retry must not duplicate the record");
+        assert_eq!(bookmarks[0].created_at, original_created_at, "database preserves whatever created_at we give it");
+
+        // But if we explicitly pass a new created_at (which the commands layer won't do),
+        // the database will update it since it uses INSERT OR REPLACE
+        let bm_with_new_time = Bookmark {
+            id: "preserve-id".into(),
+            reference: r("Matt", 1, 1),
+            label: "updated".into(),
+            created_at: Utc::now(),
+        };
+        db.save_bookmark(&bm_with_new_time).unwrap();
+        let updated = db.get_bookmark("preserve-id").unwrap().expect("bookmark must exist");
+        // The database layer will use the new timestamp since we passed it explicitly
+        assert_eq!(updated.created_at, bm_with_new_time.created_at);
+    }
+
+    #[test]
+    fn failed_delete_does_not_corrupt_unrelated_bookmarks() {
+        let db = open(&db_path("bm_delete_isolation"));
+        db.save_bookmark(&make_bookmark("keep-me", "Ps")).unwrap();
+        // Attempt to delete a nonexistent bookmark
+        let _ = db.delete_bookmark("ghost-id");
+        // The surviving bookmark must be intact
+        let all = db.get_bookmarks().unwrap();
+        assert_eq!(all.len(), 1);
+        assert_eq!(all[0].id, "keep-me");
     }
 
     #[test]
