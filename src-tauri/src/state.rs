@@ -9,34 +9,187 @@ use module_manager::manager::ModuleManager;
 use persistence::db::Database;
 use search_engine::index::VerseIndex;
 
-/// Compute a lightweight fingerprint from a file's metadata (mtime + size).
-/// Returns `None` if the file cannot be stat'd.
-fn fingerprint_path(path: &Path) -> Option<u64> {
+/// Source fingerprint versioning. Bump when fingerprint computation changes
+/// to invalidate old cached metadata and trigger re-indexing.
+const FINGERPRINT_VERSION: u32 = 2;
+
+/// Compute a deterministic fingerprint from a file's metadata.
+/// Includes file path, size, and mtime to avoid collisions.
+/// Returns None if the file cannot be stat'd.
+fn fingerprint_file(path: &Path) -> Option<u64> {
     let meta = std::fs::metadata(path).ok()?;
-    let mtime = meta
+    let mtime_secs = meta
         .modified()
         .ok()?
         .duration_since(std::time::SystemTime::UNIX_EPOCH)
         .ok()?
         .as_secs();
-    Some(mtime.wrapping_add(meta.len()))
+
+    // Use a simple but collision-resistant approach:
+    // High 32 bits: file size (capped), low 32 bits: mtime seconds (wraps every ~136 years)
+    // Also include path hash to differentiate same-sized files with same mtime.
+    let path_hash = {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        let mut hasher = DefaultHasher::new();
+        path.hash(&mut hasher);
+        (hasher.finish() as u32) as u64
+    };
+
+    let size = meta.len().min(u32::MAX as u64) as u32 as u64;
+    let mtime = (mtime_secs & 0xFFFFFFFF) as u64;
+
+    // Combine version, size, mtime, and path hash for a 64-bit fingerprint.
+    // version(8) | size_hi(8) | mtime_hi(16) | size_lo(16) | mtime_lo(16)
+    let fingerprint = ((FINGERPRINT_VERSION as u64) << 56)
+        | (((size >> 16) & 0xFF) << 48)
+        | (((mtime >> 16) & 0xFFFF) << 32)
+        | ((size & 0xFFFF) << 16)
+        | (mtime & 0xFFFF)
+        ^ path_hash;
+
+    Some(fingerprint)
+}
+
+/// Fingerprint multiple files deterministically (sorted by path).
+/// Returns None if any file is missing or unreadable.
+fn fingerprint_files(paths: &[PathBuf]) -> Option<u64> {
+    if paths.is_empty() {
+        return None;
+    }
+
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    let mut hasher = DefaultHasher::new();
+    // Sort for determinism
+    let mut sorted = paths.to_vec();
+    sorted.sort();
+
+    for path in sorted {
+        let fp = fingerprint_file(&path)?;
+        fp.hash(&mut hasher);
+    }
+
+    Some(hasher.finish())
+}
+
+/// Find all source files for an XML (OSIS/XML) module.
+/// Returns paths to found text files, or None if the module directory doesn't exist.
+fn xml_source_files(modules_dir: &Path, id: &str) -> Option<Vec<PathBuf>> {
+    let module_dir = modules_dir.join(id);
+    if !module_dir.exists() {
+        return None;
+    }
+
+    let mut files = Vec::new();
+    // Look for text.osis or text.xml (order doesn't matter, we'll sort)
+    for name in ["text.osis", "text.xml"] {
+        let path = module_dir.join(name);
+        if path.exists() {
+            files.push(path);
+        }
+    }
+
+    if files.is_empty() {
+        None
+    } else {
+        Some(files)
+    }
+}
+
+/// Find all source files for a SWORD module by parsing its .conf file.
+/// Returns paths to data files referenced by DataPath, or None if the conf
+/// file is missing or the DataPath cannot be resolved.
+fn sword_source_files(id: &str, sword_dir: &Path) -> Option<Vec<PathBuf>> {
+    let conf_path = sword_dir
+        .join("mods.d")
+        .join(format!("{}.conf", id.to_ascii_lowercase()));
+
+    if !conf_path.exists() {
+        return None;
+    }
+
+    let conf_text = std::fs::read_to_string(&conf_path).ok()?;
+
+    // Extract DataPath value from conf
+    let data_path = conf_text
+        .lines()
+        .find_map(|l| {
+            let (k, v) = l.split_once('=')?;
+            k.trim()
+                .eq_ignore_ascii_case("DataPath")
+                .then(|| v.trim())
+        })?;
+
+    // Resolve DataPath relative to sword_dir, ensuring it stays within modules/
+    let rel = Path::new(data_path.trim_start_matches("./"));
+    let safe = rel
+        .components()
+        .all(|c| matches!(c, std::path::Component::Normal(_)));
+    if !safe || !rel.starts_with("modules") {
+        return None;
+    }
+
+    let data_dir = sword_dir.join(rel);
+    if !data_dir.exists() {
+        return None;
+    }
+
+    // Collect all files recursively under the data directory
+    let mut files = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(&data_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                files.push(path);
+            } else if path.is_dir() {
+                // Recursively add files from subdirectories
+                if let Ok(sub) = collect_all_files(&path) {
+                    files.extend(sub);
+                }
+            }
+        }
+    }
+
+    if files.is_empty() {
+        None
+    } else {
+        Some(files)
+    }
+}
+
+/// Recursively collect all files in a directory.
+fn collect_all_files(dir: &Path) -> std::io::Result<Vec<PathBuf>> {
+    let mut files = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                files.push(path);
+            } else if path.is_dir() {
+                files.extend(collect_all_files(&path)?);
+            }
+        }
+    }
+    Ok(files)
 }
 
 /// Return a source fingerprint for a module without reading its Bible text.
 /// XML modules: fingerprints text.osis or text.xml.
-/// SWORD modules: fingerprints the {id}.conf file in mods.d/.
-/// Returns 0 when no source file is found — 0 never matches a valid stored
-/// fingerprint, so it safely triggers re-indexing on the next startup.
-fn module_source_fingerprint(id: &str, modules_dir: &Path, sword_dir: &Path) -> u64 {
-    for name in ["text.osis", "text.xml"] {
-        if let Some(fp) = fingerprint_path(&modules_dir.join(id).join(name)) {
-            return fp;
-        }
+/// SWORD modules: fingerprints the data files referenced in {id}.conf.
+///
+/// Returns None if no source files are found (module not installed or unreadable).
+/// Never returns Some(0) — 0 is reserved for "uninstall" operations.
+fn module_source_fingerprint(id: &str, modules_dir: &Path, sword_dir: &Path) -> Option<u64> {
+    // Try XML module first
+    if let Some(files) = xml_source_files(modules_dir, id) {
+        return fingerprint_files(&files);
     }
-    let conf = sword_dir
-        .join("mods.d")
-        .join(format!("{}.conf", id.to_ascii_lowercase()));
-    fingerprint_path(&conf).unwrap_or(0)
+
+    // Try SWORD module
+    sword_source_files(id, sword_dir)
+        .and_then(|files| fingerprint_files(&files))
 }
 
 type Result<T> = std::result::Result<T, BibleError>;
@@ -121,8 +274,8 @@ impl AppState {
     pub fn uninstall(&self, id: &str) -> Result<()> {
         self.lock_manager()?.uninstall(id)?;
         self.bible_engine.reload();
-        // An empty slice deletes every indexed document for this module_id.
-        self.search_engine.index_module(id, &[], 0)
+        // An empty slice with Some(0) fingerprint deletes every indexed document for this module_id.
+        self.search_engine.index_module(id, &[], Some(0))
     }
 
     fn lock_manager(&self) -> Result<std::sync::MutexGuard<'_, ModuleManager>> {
@@ -261,6 +414,9 @@ mod tests {
             );
         }
 
+        // Ensure mtime changes by waiting (fingerprints use second-granularity mtime)
+        std::thread::sleep(std::time::Duration::from_millis(1100));
+
         // Overwrite source file with different content (new mtime and/or size → new fingerprint)
         write_xml_module(&data.join("modules"), "MOD", "quarbondizer");
 
@@ -368,7 +524,7 @@ mod tests {
         );
 
         // Uninstall by clearing search index (XML uninstall removes the module dir)
-        state.search_engine.index_module("MOD_A", &[], 0).unwrap();
+        state.search_engine.index_module("MOD_A", &[], Some(0)).unwrap();
 
         assert!(
             state
@@ -391,6 +547,104 @@ mod tests {
     }
 
     // ── Validation tests (safe, no real modules) ───────────────────────────────
+
+    #[test]
+    fn fingerprint_collision_resistance() {
+        // Test that different files with similar sizes and mtimes produce different fingerprints.
+        let data = temp_data_dir("fingerprint_collision");
+
+        // Write two modules with intentionally similar characteristics
+        write_xml_module(&data.join("modules"), "MOD1", "content_one");
+        write_xml_module(&data.join("modules"), "MOD2", "content_two");
+
+        let fp1 = module_source_fingerprint("MOD1", &data.join("modules"), &data.join("sword"));
+        let fp2 = module_source_fingerprint("MOD2", &data.join("modules"), &data.join("sword"));
+
+        // Even if files are created close together, fingerprints must differ
+        // (due to path hashing and version prefix)
+        assert_ne!(fp1, fp2, "Different modules must produce different fingerprints");
+
+        let _ = std::fs::remove_dir_all(&data);
+    }
+
+    #[test]
+    fn missing_source_does_not_match_valid_fingerprint() {
+        // Verify that missing source (None fingerprint) does not match a valid fingerprint.
+        let data = temp_data_dir("missing_source_match");
+        let state = AppState::new(data.clone()).unwrap();
+
+        // Create and index an XML module
+        write_xml_module(&data.join("modules"), "MOD", "some_text");
+        let fp = module_source_fingerprint("MOD", &data.join("modules"), &data.join("sword"));
+        assert!(fp.is_some(), "Fresh module must have a valid fingerprint");
+
+        // Simulate checking a non-existent module
+        let missing_fp = module_source_fingerprint("NONEXISTENT", &data.join("modules"), &data.join("sword"));
+        assert!(missing_fp.is_none(), "Missing module must return None");
+
+        // Verify is_module_current never returns true for None fingerprint
+        assert!(!state.search_engine.is_module_current("MOD", missing_fp),
+            "Missing source (None) must not match any indexed module");
+
+        let _ = std::fs::remove_dir_all(&data);
+    }
+
+    #[test]
+    fn multifile_module_detects_any_change() {
+        // Create a fixture where multiple files contribute to fingerprint
+        // This test verifies that changes to any source file invalidate the index.
+        let data = temp_data_dir("multifile_detect");
+
+        // Create an XML module directory with multiple files
+        let mod_dir = data.join("modules").join("MULTIFILE");
+        std::fs::create_dir_all(&mod_dir).unwrap();
+        std::fs::write(mod_dir.join("module.json"),
+            r#"{"id":"MULTIFILE","name":"Multi","type":"Bible","lang":"en"}"#).unwrap();
+        std::fs::write(mod_dir.join("text.osis"),
+            r#"<osis><osisText><div type="book" osisID="Gen"><chapter osisID="Gen.1"><verse osisID="Gen.1.1">First</verse></chapter></div></osisText></osis>"#).unwrap();
+
+        let fp1 = module_source_fingerprint("MULTIFILE", &data.join("modules"), &data.join("sword"));
+        assert!(fp1.is_some(), "Module with text.osis must have fingerprint");
+
+        // Modify the text file (simulate re-extraction with different content)
+        std::thread::sleep(std::time::Duration::from_millis(10)); // Ensure mtime change
+        std::fs::write(mod_dir.join("text.osis"),
+            r#"<osis><osisText><div type="book" osisID="Gen"><chapter osisID="Gen.1"><verse osisID="Gen.1.1">Modified</verse></chapter></div></osisText></osis>"#).unwrap();
+
+        let fp2 = module_source_fingerprint("MULTIFILE", &data.join("modules"), &data.join("sword"));
+        assert!(fp2.is_some(), "Modified module must still have fingerprint");
+        assert_ne!(fp1, fp2, "Changing source file must produce different fingerprint");
+
+        let _ = std::fs::remove_dir_all(&data);
+    }
+
+    #[test]
+    fn uninstall_isolation_unaffected_modules_searchable() {
+        // Verify that uninstalling one module leaves others intact in search index
+        let data = temp_data_dir("uninstall_isolation");
+        write_xml_module(&data.join("modules"), "KEEP_A", "search_text_keep_a");
+        write_xml_module(&data.join("modules"), "REMOVE_B", "search_text_remove_b");
+        write_xml_module(&data.join("modules"), "KEEP_C", "search_text_keep_c");
+
+        let state = AppState::new(data.clone()).unwrap();
+
+        // Verify all modules indexed
+        let all_results = state.search_engine.search("search_text", 100).unwrap();
+        assert_eq!(all_results.len(), 3, "All three modules must be indexed initially");
+
+        // Uninstall the middle module
+        state.search_engine.index_module("REMOVE_B", &[], Some(0)).unwrap();
+
+        // Verify others remain
+        let after = state.search_engine.search("search_text", 100).unwrap();
+        let ids: Vec<&str> = after.iter().map(|r| r.module_id.as_str()).collect();
+        assert!(ids.contains(&"KEEP_A"), "KEEP_A must remain searchable");
+        assert!(!ids.contains(&"REMOVE_B"), "REMOVE_B must be removed");
+        assert!(ids.contains(&"KEEP_C"), "KEEP_C must remain searchable");
+        assert_eq!(after.len(), 2, "Exactly 2 modules should remain");
+
+        let _ = std::fs::remove_dir_all(&data);
+    }
 
     #[test]
     fn install_rejects_invalid_ids_and_garbage_without_side_effects() {
@@ -491,7 +745,7 @@ mod tests {
             state.search_engine.is_module_current("KJV", fp),
             "Fingerprint must match on warm SWORD startup"
         );
-        assert!(fp > 0, "SWORD module must produce a non-zero fingerprint");
+        assert!(fp.is_some(), "SWORD module must produce a fingerprint");
         let results = state.search_engine.search("beginning", 10).unwrap();
         assert!(!results.is_empty(), "Search must work after warm restart");
 

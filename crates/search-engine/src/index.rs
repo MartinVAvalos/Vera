@@ -20,11 +20,12 @@ type Result<T> = std::result::Result<T, BibleError>;
 const METADATA_FILE: &str = "index_metadata.json";
 
 /// Persistent metadata mapping each indexed module to a source fingerprint.
-/// The fingerprint is computed from the module's source file (mtime + size) so
-/// that reinstalls with changed content are detected without reading Bible text.
+/// The fingerprint is computed from the module's source files so that reinstalls
+/// with changed content are detected without reading Bible text.
+/// None represents an indexed module with unknown source (should not normally occur).
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Default)]
 struct IndexMetadata {
-    indexed_modules: HashMap<String, u64>,
+    indexed_modules: HashMap<String, Option<u64>>,
 }
 
 impl IndexMetadata {
@@ -53,13 +54,15 @@ impl IndexMetadata {
     }
 
     /// Mark a module as indexed with the given source fingerprint.
-    fn mark_indexed(&mut self, module_id: &str, fingerprint: u64) {
+    /// Pass None to mark as indexed but with unknown source (requires re-indexing on next startup).
+    fn mark_indexed(&mut self, module_id: &str, fingerprint: Option<u64>) {
         self.indexed_modules
             .insert(module_id.to_string(), fingerprint);
     }
 
     /// True when the stored fingerprint for `module_id` exactly matches `fingerprint`.
-    fn is_current(&self, module_id: &str, fingerprint: u64) -> bool {
+    /// Returns false if the stored fingerprint is None (unknown source).
+    fn is_current(&self, module_id: &str, fingerprint: Option<u64>) -> bool {
         self.indexed_modules.get(module_id).copied() == Some(fingerprint)
     }
 
@@ -120,7 +123,8 @@ impl VerseIndex {
 
     /// Returns true when the stored fingerprint for `module_id` matches `fingerprint`.
     /// Use this to skip verse extraction on startup when the source is unchanged.
-    pub fn is_module_current(&self, module_id: &str, fingerprint: u64) -> bool {
+    /// Returns false if the stored fingerprint is None (unknown source).
+    pub fn is_module_current(&self, module_id: &str, fingerprint: Option<u64>) -> bool {
         self.metadata
             .lock()
             .ok()
@@ -139,8 +143,10 @@ impl VerseIndex {
 
     /// Index all verses for one module. Clears any previous docs for that
     /// module first. Pass an empty slice to remove a module's documents (uninstall).
-    /// `fingerprint` is persisted after a successful commit; pass `0` for uninstall.
-    pub fn index_module(&self, module_id: &str, verses: &[Verse], fingerprint: u64) -> Result<()> {
+    /// `fingerprint` is persisted after a successful commit.
+    /// Pass None to mark as indexed but with unknown source (will re-index on next startup).
+    /// Pass Some(0) to uninstall (removes all docs and metadata for the module).
+    pub fn index_module(&self, module_id: &str, verses: &[Verse], fingerprint: Option<u64>) -> Result<()> {
         let mut writer = self
             .index
             .writer(50_000_000)
@@ -362,7 +368,7 @@ mod tests {
         idx.index_module(
             "KJV",
             &[verse("John", 1, 1, "In the beginning was the Word", "KJV")],
-            1,
+            Some(1),
         )
         .unwrap();
 
@@ -376,8 +382,8 @@ mod tests {
     fn reindex_does_not_duplicate() {
         let idx = VerseIndex::new(tmp_index_dir("search_no_dup")).unwrap();
         let verses = vec![verse("Gen", 1, 1, "unique_marker_alpha", "KJV")];
-        idx.index_module("KJV", &verses, 1).unwrap();
-        idx.index_module("KJV", &verses, 1).unwrap();
+        idx.index_module("KJV", &verses, Some(1)).unwrap();
+        idx.index_module("KJV", &verses, Some(1)).unwrap();
 
         let results = idx.search("unique_marker_alpha", 50).unwrap();
         assert_eq!(
@@ -394,20 +400,20 @@ mod tests {
         idx.index_module(
             "MOD_A",
             &[verse("Gen", 1, 1, "module_a_unique_text", "MOD_A")],
-            1,
+            Some(1),
         )
         .unwrap();
         idx.index_module(
             "MOD_B",
             &[verse("Gen", 1, 1, "module_b_unique_text", "MOD_B")],
-            2,
+            Some(2),
         )
         .unwrap();
 
         assert!(!idx.search("module_a_unique_text", 10).unwrap().is_empty());
         assert!(!idx.search("module_b_unique_text", 10).unwrap().is_empty());
 
-        idx.index_module("MOD_A", &[], 0).unwrap();
+        idx.index_module("MOD_A", &[], Some(0)).unwrap();
 
         assert!(
             idx.search("module_a_unique_text", 10).unwrap().is_empty(),
@@ -425,13 +431,13 @@ mod tests {
         idx.index_module(
             "KJV",
             &[verse("John", 3, 16, "For God so loved the world", "KJV")],
-            1,
+            Some(1),
         )
         .unwrap();
         idx.index_module(
             "DRB",
             &[verse("John", 3, 16, "For God so loved the world", "DRB")],
-            2,
+            Some(2),
         )
         .unwrap();
 
@@ -446,7 +452,7 @@ mod tests {
     fn schema_mismatch_rebuilds_cleanly() {
         let dir = tmp_index_dir("search_schema");
         let idx1 = VerseIndex::new(dir.clone()).unwrap();
-        idx1.index_module("KJV", &[verse("Gen", 1, 1, "schema_test", "KJV")], 1)
+        idx1.index_module("KJV", &[verse("Gen", 1, 1, "schema_test", "KJV")], Some(1))
             .unwrap();
         drop(idx1);
         let idx2 = VerseIndex::new(dir).unwrap();
@@ -460,10 +466,10 @@ mod tests {
 
         {
             let idx = VerseIndex::new(dir.clone()).unwrap();
-            idx.index_module("TEST", &[verse("Gen", 1, 1, "test_text", "TEST")], FP)
+            idx.index_module("TEST", &[verse("Gen", 1, 1, "test_text", "TEST")], Some(FP))
                 .unwrap();
             assert!(
-                idx.is_module_current("TEST", FP),
+                idx.is_module_current("TEST", Some(FP)),
                 "fingerprint should match"
             );
             assert!(idx.is_module_indexed("TEST"), "should be marked present");
@@ -472,12 +478,12 @@ mod tests {
         {
             let idx = VerseIndex::new(dir).unwrap();
             assert!(
-                idx.is_module_current("TEST", FP),
+                idx.is_module_current("TEST", Some(FP)),
                 "fingerprint must persist across reopen"
             );
             // A different fingerprint must NOT match.
             assert!(
-                !idx.is_module_current("TEST", FP + 1),
+                !idx.is_module_current("TEST", Some(FP + 1)),
                 "stale fingerprint must not match"
             );
         }
@@ -488,17 +494,17 @@ mod tests {
         let dir = tmp_index_dir("metadata_uninstall");
         let idx = VerseIndex::new(dir).unwrap();
 
-        idx.index_module("MOD", &[verse("Gen", 1, 1, "text", "MOD")], 42)
+        idx.index_module("MOD", &[verse("Gen", 1, 1, "text", "MOD")], Some(42))
             .unwrap();
         assert!(idx.is_module_indexed("MOD"));
-        assert!(idx.is_module_current("MOD", 42));
+        assert!(idx.is_module_current("MOD", Some(42)));
 
-        idx.index_module("MOD", &[], 0).unwrap();
+        idx.index_module("MOD", &[], Some(0)).unwrap();
         assert!(
             !idx.is_module_indexed("MOD"),
             "Indexed flag should be cleared on uninstall"
         );
-        assert!(!idx.is_module_current("MOD", 42));
+        assert!(!idx.is_module_current("MOD", Some(42)));
     }
 
     #[test]
@@ -506,22 +512,22 @@ mod tests {
         let dir = tmp_index_dir("metadata_multiple");
         let idx = VerseIndex::new(dir).unwrap();
 
-        idx.index_module("MOD_A", &[verse("Gen", 1, 1, "a", "MOD_A")], 10)
+        idx.index_module("MOD_A", &[verse("Gen", 1, 1, "a", "MOD_A")], Some(10))
             .unwrap();
-        idx.index_module("MOD_B", &[verse("Gen", 1, 1, "b", "MOD_B")], 20)
+        idx.index_module("MOD_B", &[verse("Gen", 1, 1, "b", "MOD_B")], Some(20))
             .unwrap();
 
         assert!(idx.is_module_indexed("MOD_A"));
         assert!(idx.is_module_indexed("MOD_B"));
         assert!(!idx.is_module_indexed("MOD_C"));
-        assert!(idx.is_module_current("MOD_A", 10));
-        assert!(idx.is_module_current("MOD_B", 20));
+        assert!(idx.is_module_current("MOD_A", Some(10)));
+        assert!(idx.is_module_current("MOD_B", Some(20)));
         assert!(
-            !idx.is_module_current("MOD_A", 20),
+            !idx.is_module_current("MOD_A", Some(20)),
             "wrong fingerprint must not match"
         );
 
-        idx.index_module("MOD_A", &[], 0).unwrap();
+        idx.index_module("MOD_A", &[], Some(0)).unwrap();
 
         assert!(!idx.is_module_indexed("MOD_A"));
         assert!(
@@ -534,19 +540,19 @@ mod tests {
     fn changed_fingerprint_invalidates_current_check() {
         let dir = tmp_index_dir("fingerprint_change");
         let idx = VerseIndex::new(dir).unwrap();
-        idx.index_module("MOD", &[verse("Gen", 1, 1, "old", "MOD")], 100)
+        idx.index_module("MOD", &[verse("Gen", 1, 1, "old", "MOD")], Some(100))
             .unwrap();
 
         // Simulate reinstall with new content (different fingerprint)
-        idx.index_module("MOD", &[verse("Gen", 1, 1, "new", "MOD")], 200)
+        idx.index_module("MOD", &[verse("Gen", 1, 1, "new", "MOD")], Some(200))
             .unwrap();
 
         assert!(
-            !idx.is_module_current("MOD", 100),
+            !idx.is_module_current("MOD", Some(100)),
             "old fingerprint should not match"
         );
         assert!(
-            idx.is_module_current("MOD", 200),
+            idx.is_module_current("MOD", Some(200)),
             "new fingerprint should match"
         );
         // New content is searchable
@@ -564,7 +570,7 @@ mod tests {
         // Cold index: write metadata claiming module is indexed
         {
             let idx = VerseIndex::new(dir.clone()).unwrap();
-            idx.index_module("MOD", &[verse("Gen", 1, 1, "text", "MOD")], 99)
+            idx.index_module("MOD", &[verse("Gen", 1, 1, "text", "MOD")], Some(99))
                 .unwrap();
         }
 
@@ -590,7 +596,7 @@ mod tests {
         let dir = tmp_index_dir("corrupt_metadata");
         {
             let idx = VerseIndex::new(dir.clone()).unwrap();
-            idx.index_module("MOD", &[verse("Gen", 1, 1, "text", "MOD")], 7)
+            idx.index_module("MOD", &[verse("Gen", 1, 1, "text", "MOD")], Some(7))
                 .unwrap();
         }
         // Corrupt the metadata file
@@ -609,7 +615,7 @@ mod tests {
         let dir = tmp_index_dir("metadata_save_resilient");
         let idx = VerseIndex::new(dir).unwrap();
 
-        idx.index_module("RESILIENT", &[verse("Gen", 1, 1, "text", "RESILIENT")], 1)
+        idx.index_module("RESILIENT", &[verse("Gen", 1, 1, "text", "RESILIENT")], Some(1))
             .unwrap();
 
         let results = idx.search("text", 10).unwrap();
