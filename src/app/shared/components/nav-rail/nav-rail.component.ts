@@ -26,20 +26,20 @@ interface NavItem {
   styles: [`
     .nav-rail {
       width: 44px;
-      background: var(--color-surface-nav);
+      background: var(--nav-bg-color);
       display: flex;
       flex-direction: column;
       align-items: center;
       padding-top: 8px;
       flex-shrink: 0;
-      border-right: 1px solid var(--color-border-subtle);
+      border-right: 1px solid var(--nav-border-color);
     }
     .nav-btn {
       width: 36px;
       height: 36px;
       border: none;
       background: transparent;
-      color: var(--color-text-muted);
+      color: var(--nav-text-color);
       cursor: pointer;
       border-radius: 6px;
       font-size: 16px;
@@ -50,12 +50,12 @@ interface NavItem {
       transition: background 0.15s, color 0.15s;
     }
     .nav-btn:hover {
-      background: rgba(255,255,255,0.06);
-      color: var(--color-text-primary);
+      background: var(--nav-bg-hover);
+      color: var(--nav-text-hover);
     }
     .nav-btn.active {
-      background: rgba(255,255,255,0.1);
-      color: var(--color-text-primary);
+      background: var(--nav-bg-active);
+      color: var(--nav-text-hover);
     }
   `],
 })

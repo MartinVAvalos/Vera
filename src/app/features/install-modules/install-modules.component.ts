@@ -247,8 +247,8 @@ export interface InstallTask {
     }
 
     .remove-btn:hover:not(:disabled) {
-      color: #d9534f;
-      border-color: #d9534f;
+      color: var(--error-text-color);
+      border-color: var(--error-text-color);
     }
 
     .install-btn:disabled, .remove-btn:disabled {
@@ -298,21 +298,21 @@ export interface InstallTask {
     }
 
     .status-message.installing {
-      background: rgba(100, 150, 255, 0.1);
-      color: #6496ff;
-      border: 1px solid rgba(100, 150, 255, 0.3);
+      background: var(--installing-bg-color);
+      color: var(--installing-text-color);
+      border: 1px solid var(--installing-border-color);
     }
 
     .status-message.success {
-      background: rgba(76, 175, 80, 0.1);
-      color: #4caf50;
-      border: 1px solid rgba(76, 175, 80, 0.3);
+      background: var(--success-bg-color);
+      color: var(--success-text-color);
+      border: 1px solid var(--success-border-color);
     }
 
     .status-message.error {
-      background: rgba(217, 83, 79, 0.1);
-      color: #d9534f;
-      border: 1px solid rgba(217, 83, 79, 0.3);
+      background: var(--error-bg-color);
+      color: var(--error-text-color);
+      border: 1px solid var(--error-border-color);
     }
 
     .spinner {
@@ -350,7 +350,7 @@ export interface InstallTask {
     }
 
     .validation-error {
-      color: #d9534f;
+      color: var(--error-text-color);
       font-size: 11px;
       margin-top: 2px;
     }
@@ -362,7 +362,7 @@ export interface InstallTask {
     .confirm-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.6);
+      background: var(--modal-backdrop-bg);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -418,14 +418,14 @@ export interface InstallTask {
     }
 
     .confirm-remove-btn {
-      background: #d9534f;
-      color: #fff;
-      border-color: #d9534f;
+      background: var(--button-bg-error);
+      color: var(--button-text-error);
+      border-color: var(--button-bg-error);
     }
 
     .confirm-remove-btn:hover:not(:disabled) {
-      background: #c9302c;
-      border-color: #c9302c;
+      background: var(--button-bg-error-hover);
+      border-color: var(--button-bg-error-hover);
     }
 
     .confirm-remove-btn:disabled {

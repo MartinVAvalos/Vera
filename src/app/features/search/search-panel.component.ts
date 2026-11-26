@@ -47,45 +47,46 @@ import { SearchResult, formatRef } from '../../core/models';
   styles: [`
     .search-panel { padding: 8px 0; }
     .panel-title {
-      font-size: 11px; font-weight: 700; color: var(--color-text-primary);
+      font-size: 11px; font-weight: 700; color: var(--panel-text-color);
       padding: 6px 12px 10px; letter-spacing: 0.08em;
     }
     .search-box { display: flex; gap: 6px; padding: 0 12px 10px; }
     input {
-      flex: 1; background: var(--color-surface-tab);
-      border: 1px solid var(--color-border-subtle);
-      color: var(--color-text-primary); padding: 5px 8px;
+      flex: 1; background: var(--input-bg-color);
+      border: 1px solid var(--input-border-color);
+      color: var(--input-text-color); padding: 5px 8px;
       border-radius: 4px; font-size: 12px; outline: none;
     }
-    input:focus { border-color: var(--color-text-link); }
+    input::placeholder { color: var(--input-placeholder-color); }
+    input:focus { border-color: var(--input-border-focus); }
     button {
-      background: var(--color-surface-tab); border: 1px solid var(--color-border-subtle);
-      color: var(--color-text-muted); padding: 4px 10px;
+      background: var(--input-bg-color); border: 1px solid var(--input-border-color);
+      color: var(--panel-text-muted); padding: 4px 10px;
       border-radius: 4px; cursor: pointer; font-size: 12px;
     }
-    button:hover:not(:disabled) { color: var(--color-text-primary); }
+    button:hover:not(:disabled) { color: var(--panel-text-color); }
     button:disabled { opacity: 0.4; cursor: default; }
-    .muted-text { color: var(--color-text-muted); font-size: 12px; padding: 0 12px; }
+    .muted-text { color: var(--panel-text-muted); font-size: 12px; padding: 0 12px; }
     .error-text {
-      color: #d9534f; font-size: 12px; padding: 0 12px;
-      background: rgba(217, 83, 79, 0.1); margin: 8px 12px 0;
-      border: 1px solid rgba(217, 83, 79, 0.3); border-radius: 4px;
+      color: var(--error-text-color); font-size: 12px; padding: 0 12px;
+      background: var(--error-bg-color); margin: 8px 12px 0;
+      border: 1px solid var(--error-border-color); border-radius: 4px;
       padding: 8px 12px;
     }
     .results { list-style: none; margin: 0; padding: 0; }
     .result-item {
       display: flex; flex-direction: column; padding: 7px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid var(--panel-border-color);
       cursor: pointer; gap: 3px;
     }
-    .result-item:hover { background: rgba(255,255,255,0.04); }
+    .result-item:hover { background: var(--panel-hover-bg); }
     .result-meta { display: flex; align-items: center; gap: 8px; }
-    .ref { font-size: 11px; color: var(--color-text-link); }
+    .ref { font-size: 11px; color: var(--reader-link-color); }
     .module-tag {
-      font-size: 10px; color: var(--color-text-muted);
-      background: rgba(255,255,255,0.06); border-radius: 3px; padding: 1px 5px;
+      font-size: 10px; color: var(--panel-text-muted);
+      background: var(--input-bg-color); border-radius: 3px; padding: 1px 5px;
     }
-    .snippet { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+    .snippet { font-size: 12px; color: var(--reader-text-color); line-height: 1.5; }
   `],
 })
 export class SearchPanelComponent {

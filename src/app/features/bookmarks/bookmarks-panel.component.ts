@@ -106,10 +106,10 @@ import { Bookmark, BibleRef, formatRef } from '../../core/models';
       font-size: 16px;
       line-height: 1;
     }
-    .add-btn:hover:not(:disabled) { background: rgba(255,255,255,0.06); }
+    .add-btn:hover:not(:disabled) { background: var(--active-bg); }
     .add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .error-msg {
-      color: #d9534f;
+      color: var(--error-text-color);
       font-size: 11px;
       padding: 2px 12px 8px;
       display: flex;
@@ -121,8 +121,8 @@ import { Bookmark, BibleRef, formatRef } from '../../core/models';
       font-size: 11px;
       padding: 2px 8px;
       background: transparent;
-      border: 1px solid #d9534f;
-      color: #d9534f;
+      border: 1px solid var(--error-text-color);
+      color: var(--error-text-color);
       border-radius: 4px;
       cursor: pointer;
       flex-shrink: 0;
@@ -130,7 +130,7 @@ import { Bookmark, BibleRef, formatRef } from '../../core/models';
     .error-msg button:disabled { opacity: 0.5; cursor: not-allowed; }
     .delete-error-row {
       list-style: none;
-      color: #d9534f;
+      color: var(--error-text-color);
       font-size: 11px;
       padding: 2px 12px 4px;
       display: flex;
@@ -142,8 +142,8 @@ import { Bookmark, BibleRef, formatRef } from '../../core/models';
       font-size: 11px;
       padding: 2px 8px;
       background: transparent;
-      border: 1px solid #d9534f;
-      color: #d9534f;
+      border: 1px solid var(--error-text-color);
+      color: var(--error-text-color);
       border-radius: 4px;
       cursor: pointer;
       flex-shrink: 0;
@@ -154,7 +154,7 @@ import { Bookmark, BibleRef, formatRef } from '../../core/models';
     .item {
       display: flex;
       align-items: center;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid var(--hover-bg);
     }
     .item-btn {
       flex: 1;
@@ -168,7 +168,7 @@ import { Bookmark, BibleRef, formatRef } from '../../core/models';
       cursor: pointer;
       text-align: left;
     }
-    .item-btn:hover { background: rgba(255,255,255,0.04); }
+    .item-btn:hover { background: var(--hover-bg); }
     .ref { font-size: 11px; color: var(--color-text-link); }
     .label { font-size: 12px; color: var(--color-text-muted); }
     .del-btn {
@@ -180,7 +180,7 @@ import { Bookmark, BibleRef, formatRef } from '../../core/models';
       font-size: 14px;
       opacity: 0.5;
     }
-    .del-btn:hover:not(:disabled) { opacity: 1; color: #ec6860; }
+    .del-btn:hover:not(:disabled) { opacity: 1; color: var(--color-status-error); }
     .del-btn:disabled { cursor: not-allowed; }
   `],
 })

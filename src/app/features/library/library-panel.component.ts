@@ -54,7 +54,7 @@ interface ModuleGroup {
     .panel-title {
       font-size: 11px;
       font-weight: 700;
-      color: var(--color-text-primary);
+      color: var(--panel-text-color);
       padding: 6px 12px 10px;
       letter-spacing: 0.08em;
     }
@@ -66,21 +66,21 @@ interface ModuleGroup {
       width: 100%;
       background: none;
       border: none;
-      color: var(--color-text-primary);
+      color: var(--panel-text-color);
       font-size: 12px;
       font-weight: 500;
       padding: 5px 12px;
       cursor: pointer;
       text-align: left;
     }
-    .group-header:hover { background: rgba(255,255,255,0.04); }
+    .group-header:hover { background: var(--panel-hover-bg); }
     .chevron { font-size: 10px; width: 12px; }
     .module-item {
       display: block;
       width: 100%;
       background: none;
       border: none;
-      color: var(--color-text-muted);
+      color: var(--panel-text-muted);
       font-size: 12px;
       padding: 4px 12px 4px 28px;
       cursor: pointer;
@@ -89,18 +89,18 @@ interface ModuleGroup {
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .module-item:hover:not(:disabled) { background: rgba(255,255,255,0.04); color: var(--color-text-primary); }
-    .module-item.active { color: var(--color-text-link); }
+    .module-item:hover:not(:disabled) { background: var(--panel-hover-bg); color: var(--panel-text-color); }
+    .module-item.active { color: var(--reader-link-color); }
     .module-item.disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      color: var(--color-text-muted);
+      color: var(--panel-text-muted);
     }
     .module-item:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
-    .muted-text { color: var(--color-text-muted); font-size: 11px; }
+    .muted-text { color: var(--panel-text-muted); font-size: 11px; }
   `],
 })
 export class LibraryPanelComponent implements OnInit {

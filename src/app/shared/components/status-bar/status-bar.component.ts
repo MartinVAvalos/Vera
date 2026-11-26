@@ -19,14 +19,14 @@ import { AppState } from '../../../core/state/app.state';
   styles: [`
     .status-bar {
       height: 24px;
-      background: var(--color-surface-tab);
+      background: var(--statusbar-bg-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 12px;
       flex-shrink: 0;
       font-size: 11px;
-      color: var(--color-text-secondary);
+      color: var(--statusbar-text-secondary);
     }
     .status-left { display: flex; align-items: center; gap: 6px; }
     .status-dot {
@@ -35,7 +35,7 @@ import { AppState } from '../../../core/state/app.state';
       background: var(--color-text-muted);
     }
     .status-dot.available { background: var(--color-status-online); }
-    .status-right { color: var(--color-text-secondary); }
+    .status-right { color: var(--statusbar-text-secondary); }
   `],
 })
 export class StatusBarComponent {

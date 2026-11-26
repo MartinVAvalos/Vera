@@ -49,13 +49,13 @@ import { BookNavComponent } from '../../shared/components/book-nav/book-nav.comp
       display: flex;
       flex-direction: column;
       height: 100%;
-      background: var(--color-surface-reader);
+      background: var(--reader-bg-color);
       overflow: hidden;
     }
     .tab-bar {
       display: flex;
-      background: var(--color-surface-tab);
-      border-bottom: 1px solid var(--color-border-subtle);
+      background: var(--tab-bg-color);
+      border-bottom: 1px solid var(--tab-border-color);
       overflow-x: auto;
       flex-shrink: 0;
       min-height: 34px;
@@ -67,18 +67,18 @@ import { BookNavComponent } from '../../shared/components/book-nav/book-nav.comp
       padding: 0 12px;
       background: none;
       border: none;
-      border-right: 1px solid var(--color-border-subtle);
-      color: var(--color-text-muted);
+      border-right: 1px solid var(--tab-border-color);
+      color: var(--tab-text-color);
       font-size: 12px;
       cursor: pointer;
       white-space: nowrap;
       transition: color 0.12s, background 0.12s;
     }
-    .tab:hover { background: rgba(255,255,255,0.04); color: var(--color-text-primary); }
+    .tab:hover { background: var(--panel-hover-bg); color: var(--tab-text-active); }
     .tab.active {
-      background: var(--color-surface-reader);
-      color: var(--color-text-primary);
-      border-bottom: 2px solid var(--color-text-link);
+      background: var(--tab-bg-active);
+      color: var(--tab-text-active);
+      border-bottom: 2px solid var(--tab-indicator-active);
     }
     .tab-close {
       opacity: 0.5;
@@ -96,7 +96,7 @@ import { BookNavComponent } from '../../shared/components/book-nav/book-nav.comp
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: var(--color-text-muted);
+      color: var(--reader-verse-number-color);
       gap: 12px;
     }
     .empty-icon { font-size: 40px; opacity: 0.3; }

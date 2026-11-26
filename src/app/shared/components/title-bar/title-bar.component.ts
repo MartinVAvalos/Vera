@@ -18,7 +18,7 @@ import { AppState } from '../../../core/state/app.state';
   styles: [`
     .title-bar {
       height: 36px;
-      background: var(--color-surface-bar);
+      background: var(--titlebar-bg-color);
       display: flex;
       align-items: center;
       gap: 12px;
@@ -38,9 +38,9 @@ import { AppState } from '../../../core/state/app.state';
       height: 12px;
       border-radius: 50%;
     }
-    .dot-close  { background: #ec6860; }
-    .dot-min    { background: #e9bc50; }
-    .dot-max    { background: #61bd6a; }
+    .dot-close  { background: var(--titlebar-dot-close); }
+    .dot-min    { background: var(--titlebar-dot-min); }
+    .dot-max    { background: var(--titlebar-dot-max); }
     .address-bar {
       flex: 1;
       max-width: 360px;
@@ -49,7 +49,7 @@ import { AppState } from '../../../core/state/app.state';
       border-radius: 6px;
       padding: 2px 12px;
       font-size: 12px;
-      color: var(--color-text-secondary);
+      color: var(--titlebar-text-color);
       text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;

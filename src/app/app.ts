@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { AngularSplitModule } from 'angular-split';
 import { AppState } from './core/state/app.state';
+import { ThemeService } from './core/services';
 import { NavRailComponent } from './shared/components/nav-rail/nav-rail.component';
 import { TitleBarComponent } from './shared/components/title-bar/title-bar.component';
 import { StatusBarComponent } from './shared/components/status-bar/status-bar.component';
@@ -32,6 +33,12 @@ import { SettingsPanelComponent } from './features/settings/settings-panel.compo
     SettingsPanelComponent,
   ],
 })
-export class App {
+export class App implements OnInit {
   protected readonly state = inject(AppState);
+  private readonly themeService = inject(ThemeService);
+
+  ngOnInit(): void {
+    // Initialize theme from localStorage on app start
+    // ThemeService's constructor effect will apply it to document
+  }
 }

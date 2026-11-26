@@ -95,11 +95,11 @@ import { Module } from '../../core/models';
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: #d9534f;
+      color: var(--error-text-color);
       font-size: 12px;
       text-align: center;
       padding: 16px;
-      background: rgba(217, 83, 79, 0.05);
+      background: var(--error-bg-color);
     }
     .error-title {
       font-weight: 500;

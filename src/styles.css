@@ -1,28 +1,249 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   THEME SYSTEM: Semantic + Component Alias Tokens
+   
+   Structure:
+   1. :root - Base color primitives and semantic tokens (applied to default theme)
+   2. [data-theme="vera-dark"] - Dark theme overrides
+   3. Component/region alias tokens for specific UI areas
+   
+   Future themes can be added with new [data-theme="..."] selectors
+   ============================================================================ */
+
 @theme {
-  --color-surface-base: #17191f;
-  --color-surface-bar: #242831;
-  --color-surface-nav: #20232b;
-  --color-surface-panel: #252933;
-  --color-surface-reader: #1b1e25;
-  --color-surface-commentary: #1e222a;
-  --color-surface-tab: #303541;
-  --color-surface-highlight: #544922;
-
-  --color-text-primary: #ededed;
-  --color-text-secondary: #c0c7d1;
-  --color-text-muted: #a9b4c7;
-  --color-text-link: #86a9d8;
-  --color-text-accent: #ceb881;
-
-  --color-border-subtle: #343945;
-
-  --color-status-online: #70bb8c;
-  --color-status-offline: #a9b4c7;
-
   --font-serif: "Georgia", "Times New Roman", serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  /* ==================== SEMANTIC COLOR TOKENS ==================== */
+  /* Use these in components for semantic meaning */
+  
+  /* Background Surfaces */
+  --color-bg-app: #17191f;
+  --color-bg-surface: #252933;
+  --color-bg-surface-raised: #2d3139;
+  --color-bg-surface-base: #252933;
+  --color-bg-surface-tab: #303541;
+  --color-bg-reader: #1b1e25;
+  --color-bg-commentary: #1e222a;
+  --color-bg-tab: #303541;
+  --color-bg-input: #1f2229;
+  --color-bg-highlight: #544922;
+  
+  /* Text Colors */
+  --color-text-primary: #ededed;
+  --color-text-secondary: #c0c7d1;
+  --color-text-tertiary: #a9b4c7;
+  --color-text-muted: #8a93a8;
+  --color-text-disabled: #6a7585;
+  
+  /* Accent & Special Text */
+  --color-text-accent: #ceb881;
+  --color-text-link: #86a9d8;
+  --color-text-link-hover: #a0bde8;
+  --color-text-link-rgb: 134, 169, 216;
+  
+  /* Reader / Bible Content (reference semantic tokens for automatic theme inheritance) */
+  --reader-bg-color: var(--color-bg-reader);
+  --reader-text-color: var(--color-text-secondary);
+  --reader-heading-color: var(--color-text-accent);
+  --reader-link-color: var(--color-text-link);
+  --reader-verse-number-color: var(--color-text-muted);
+  --reader-selection-bg: var(--color-bg-highlight);
+  --reader-selection-text: var(--color-text-primary);
+  
+  /* Borders & Dividers */
+  --color-border-subtle: #343945;
+  --color-border-default: #3f4652;
+  --color-border-active: #86a9d8;
+  
+  /* Status & Indicators */
+  --color-status-online: #70bb8c;
+  --color-status-offline: #a9b4c7;
+  --color-status-warning: #e9bc50;
+  --color-status-error: #ec6860;
+  --color-status-installing: #6496ff;
+  
+  /* ==================== REGION ALIAS TOKENS (map to semantic tokens) ==================== */
+  /* These use semantic tokens where possible to minimize duplication */
+  
+  /* Navigation Rail */
+  --nav-bg-color: #20232b;
+  --nav-text-color: var(--color-text-tertiary);
+  --nav-text-hover: var(--color-text-primary);
+  --nav-bg-hover: rgba(255,255,255,0.06);
+  --nav-bg-active: rgba(255,255,255,0.1);
+  --nav-border-color: var(--color-border-subtle);
+  
+  /* Title Bar */
+  --titlebar-bg-color: #242831;
+  --titlebar-text-color: var(--color-text-secondary);
+  --titlebar-border-color: var(--color-border-subtle);
+  --titlebar-dot-close: #ec6860;
+  --titlebar-dot-min: #e9bc50;
+  --titlebar-dot-max: #61bd6a;
+  
+  /* Status Bar */
+  --statusbar-bg-color: #303541;
+  --statusbar-text-color: var(--color-text-secondary);
+  --statusbar-text-secondary: var(--color-text-tertiary);
+  
+  /* Panels & Sidebars */
+  --panel-bg-color: #252933;
+  --panel-text-color: var(--color-text-primary);
+  --panel-text-muted: var(--color-text-tertiary);
+  --panel-border-color: var(--color-border-subtle);
+  --panel-hover-bg: rgba(255,255,255,0.04);
+  
+  /* Tabs */
+  --tab-bg-color: #303541;
+  --tab-text-color: var(--color-text-tertiary);
+  --tab-text-active: var(--color-text-primary);
+  --tab-bg-active: var(--color-bg-reader);
+  --tab-indicator-active: var(--color-text-link);
+  --tab-border-color: var(--color-border-subtle);
+  
+  /* Buttons */
+  --button-bg-primary: var(--color-text-link);
+  --button-text-primary: var(--color-bg-app);
+  --button-bg-secondary: rgba(255,255,255,0.08);
+  --button-text-secondary: var(--color-text-primary);
+  --button-hover-secondary: rgba(255,255,255,0.12);
+  --button-bg-error: var(--error-text-color);
+  --button-text-error: #fff;
+  --button-bg-error-hover: #c9302c;
+  
+  /* Inputs */
+  --input-bg-color: var(--color-bg-input);
+  --input-text-color: var(--color-text-primary);
+  --input-border-color: var(--color-border-default);
+  --input-border-focus: var(--color-border-active);
+  --input-placeholder-color: var(--color-text-muted);
+  
+  /* Surface Aliases */
+  --color-surface-base: var(--color-bg-surface);
+  --color-surface-tab: var(--color-bg-tab);
+  
+  /* Commentary Panel */
+  --commentary-bg-color: var(--color-bg-commentary);
+  --commentary-text-color: var(--color-text-secondary);
+  --commentary-border-color: var(--color-border-subtle);
+  
+  /* Error & Status States */
+  --error-text-color: var(--color-status-error);
+  --error-bg-color: rgba(236, 104, 96, 0.1);
+  --error-border-color: rgba(236, 104, 96, 0.3);
+  --warning-text-color: var(--color-status-warning);
+  --warning-bg-color: rgba(233, 188, 80, 0.1);
+  --warning-border-color: rgba(233, 188, 80, 0.3);
+  --success-text-color: var(--color-status-online);
+  --success-bg-color: rgba(112, 187, 140, 0.1);
+  --success-border-color: rgba(112, 187, 140, 0.3);
+  --installing-text-color: var(--color-status-installing);
+  --installing-bg-color: rgba(100, 150, 255, 0.1);
+  --installing-border-color: rgba(100, 150, 255, 0.3);
+  
+  /* Modal & Overlay */
+  --modal-backdrop-bg: rgba(0, 0, 0, 0.6);
+  
+  /* Scrollbar */
+  --scrollbar-track-bg: transparent;
+  --scrollbar-thumb-bg: var(--color-border-subtle);
+  --scrollbar-thumb-hover: #4a5260;
+  
+  /* Hover & Interaction States */
+  --hover-bg: rgba(255,255,255,0.04);
+  --active-bg: rgba(255,255,255,0.08);
+  --disabled-opacity: 0.5;
+}
+
+/* ==================== VERA DARK THEME ==================== */
+/* Override semantic tokens for dark theme variant */
+[data-theme="vera-dark"] {
+  /* Background Surfaces */
+  --color-bg-app: #0f1218;
+  --color-bg-surface: #1a1f28;
+  --color-bg-surface-raised: #232a35;
+  --color-bg-surface-base: #1a1f28;
+  --color-bg-surface-tab: #282f3c;
+  --color-bg-reader: #131820;
+  --color-bg-commentary: #16191f;
+  --color-bg-tab: #282f3c;
+  --color-bg-input: #191e27;
+  --color-bg-highlight: #4a3f1f;
+  
+  /* Text Colors */
+  --color-text-primary: #f0f1f3;
+  --color-text-secondary: #d0d6e0;
+  --color-text-tertiary: #b8c1d1;
+  --color-text-muted: #98a3b8;
+  --color-text-disabled: #787e8d;
+  
+  /* Accent & Special Text */
+  --color-text-accent: #d4c4a0;
+  --color-text-link: #7ba3d8;
+  --color-text-link-hover: #96b8e8;
+  --color-text-link-rgb: 123, 163, 216;
+  
+  /* Borders & Dividers */
+  --color-border-subtle: #2a3140;
+  --color-border-default: #354150;
+  --color-border-active: #7ba3d8;
+  
+  /* Status & Indicators */
+  --color-status-online: #68b580;
+  --color-status-offline: #b8c1d1;
+  --color-status-warning: #e8b540;
+  --color-status-error: #e85a50;
+  --color-status-installing: #5a8fd0;
+  
+  /* Navigation Rail */
+  --nav-bg-color: #1a1f28;
+  --nav-bg-hover: rgba(255,255,255,0.05);
+  --nav-bg-active: rgba(255,255,255,0.09);
+  --nav-border-color: #2a3140;
+  
+  /* Title Bar */
+  --titlebar-bg-color: #1a1f28;
+  --titlebar-border-color: #2a3140;
+  
+  /* Status Bar */
+  --statusbar-bg-color: #282f3c;
+  
+  /* Panels */
+  --panel-bg-color: #1a1f28;
+  --panel-border-color: #2a3140;
+  --panel-hover-bg: rgba(255,255,255,0.03);
+  
+  /* Tabs */
+  --tab-bg-color: #282f3c;
+  --tab-border-color: #2a3140;
+  
+  /* Buttons */
+  --button-bg-secondary: rgba(255,255,255,0.07);
+  --button-hover-secondary: rgba(255,255,255,0.11);
+  
+  /* Commentary */
+  --commentary-bg-color: #16191f;
+  --commentary-border-color: #2a3140;
+  
+  /* Error & Status States */
+  --error-bg-color: rgba(232, 90, 80, 0.1);
+  --error-border-color: rgba(232, 90, 80, 0.3);
+  --warning-bg-color: rgba(232, 181, 64, 0.1);
+  --warning-border-color: rgba(232, 181, 64, 0.3);
+  --success-bg-color: rgba(104, 181, 128, 0.1);
+  --success-border-color: rgba(104, 181, 128, 0.3);
+  
+  /* Scrollbar */
+  --scrollbar-thumb-bg: #2a3140;
+  --scrollbar-thumb-hover: #3f4855;
+  
+  /* Hover & Interaction States */
+  --hover-bg: rgba(255,255,255,0.03);
+  --active-bg: rgba(255,255,255,0.06);
 }
 
 * {
@@ -32,7 +253,7 @@
 html, body {
   height: 100%;
   margin: 0;
-  background-color: var(--color-surface-base);
+  background-color: var(--color-bg-app);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
 }
@@ -41,12 +262,12 @@ html, body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--scrollbar-track-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #343945;
+  background: var(--scrollbar-thumb-bg);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4a5260;
+  background: var(--scrollbar-thumb-hover);
 }

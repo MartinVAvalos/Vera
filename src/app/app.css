@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: var(--color-surface-base);
+  background-color: var(--color-bg-app);
   overflow: hidden;
 }
 
@@ -20,8 +20,8 @@
 
 .sidebar-panel {
   height: 100%;
-  background-color: var(--color-surface-panel);
-  border-right: 1px solid var(--color-border-subtle);
+  background-color: var(--panel-bg-color);
+  border-right: 1px solid var(--panel-border-color);
   overflow-y: auto;
 }
 
@@ -34,8 +34,8 @@
 
 .commentary-panel {
   height: 100%;
-  background-color: var(--color-surface-commentary);
-  border-left: 1px solid var(--color-border-subtle);
+  background-color: var(--commentary-bg-color);
+  border-left: 1px solid var(--panel-border-color);
   overflow-y: auto;
 }
 

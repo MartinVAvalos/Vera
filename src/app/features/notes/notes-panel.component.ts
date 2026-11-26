@@ -112,7 +112,7 @@ import { Note, formatRef } from '../../core/models';
     .editor-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
     textarea {
       width: 100%;
-      background: var(--color-surface-tab);
+      background: var(--color-bg-tab);
       border: 1px solid var(--color-border-subtle);
       color: var(--color-text-primary);
       padding: 6px 8px;
@@ -123,7 +123,7 @@ import { Note, formatRef } from '../../core/models';
     }
     textarea:disabled { opacity: 0.6; cursor: not-allowed; }
     .error-msg {
-      color: #d9534f;
+      color: var(--error-text-color);
       font-size: 11px;
       padding: 4px 0 2px;
       display: flex;
@@ -135,8 +135,8 @@ import { Note, formatRef } from '../../core/models';
       font-size: 11px;
       padding: 2px 8px;
       background: transparent;
-      border: 1px solid #d9534f;
-      color: #d9534f;
+      border: 1px solid var(--error-text-color);
+      color: var(--error-text-color);
       border-radius: 4px;
       cursor: pointer;
       flex-shrink: 0;
@@ -145,7 +145,7 @@ import { Note, formatRef } from '../../core/models';
     .load-error { padding: 4px 12px; }
     .notes-list { list-style: none; margin: 0; padding: 0; }
     .note-item {
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid var(--hover-bg);
     }
     .note-btn {
       display: flex;
@@ -157,7 +157,7 @@ import { Note, formatRef } from '../../core/models';
       text-align: left;
       cursor: pointer;
     }
-    .note-btn:hover:not(:disabled) { background: rgba(255,255,255,0.04); }
+    .note-btn:hover:not(:disabled) { background: var(--hover-bg); }
     .note-btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .note-ref { font-size: 11px; color: var(--color-text-link); margin-bottom: 2px; }
     .note-preview { font-size: 12px; color: var(--color-text-muted); line-height: 1.4; }
