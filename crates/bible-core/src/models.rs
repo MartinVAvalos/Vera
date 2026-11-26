@@ -127,6 +127,9 @@ pub struct DisplayOptions {
 
 impl Default for DisplayOptions {
     fn default() -> Self {
-        Self { font_size: 3, line_breaks: false }
+        Self {
+            font_size: 3,
+            line_breaks: false,
+        }
     }
 }

@@ -1,11 +1,15 @@
 use tauri::State;
 
-use bible_core::models::{Bookmark, BibleRef, Highlight, Note};
+use bible_core::models::{BibleRef, Bookmark, Highlight, Note};
 
 use crate::state::AppState;
 
-fn new_id() -> String { uuid::Uuid::new_v4().to_string() }
-fn now_rfc3339() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+fn new_id() -> String {
+    uuid::Uuid::new_v4().to_string()
+}
+fn now_rfc3339() -> chrono::DateTime<chrono::Utc> {
+    chrono::Utc::now()
+}
 
 // ── Notes ────────────────────────────────────────────────────────────────────
 
@@ -15,7 +19,8 @@ pub fn get_notes(
     reference: Option<String>,
 ) -> Result<Vec<Note>, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.get_notes(reference.as_deref()).map_err(|e| e.to_string())
+    db.get_notes(reference.as_deref())
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -56,7 +61,11 @@ pub fn save_bookmark(
 
     let bookmark = Bookmark {
         id,
-        reference: BibleRef { book, chapter, verse },
+        reference: BibleRef {
+            book,
+            chapter,
+            verse,
+        },
         label,
         created_at,
     };
@@ -89,7 +98,11 @@ pub fn save_highlight(
     let db = state.db.lock().map_err(|e| e.to_string())?;
     let highlight = Highlight {
         id: new_id(),
-        reference: BibleRef { book, chapter, verse },
+        reference: BibleRef {
+            book,
+            chapter,
+            verse,
+        },
         color,
         created_at: now_rfc3339(),
     };
@@ -104,12 +117,14 @@ pub fn delete_highlight(state: State<'_, AppState>, id: String) -> Result<(), St
 
 #[cfg(test)]
 mod tests {
-    use serde_json::{json, Value};
+    use serde_json::{Value, json};
     use tauri::{
-        ipc::{CallbackFn, InvokeBody},
-        test::{get_ipc_response, mock_builder, mock_context, noop_assets, MockRuntime, INVOKE_KEY},
-        webview::InvokeRequest,
         WebviewWindow, WebviewWindowBuilder,
+        ipc::{CallbackFn, InvokeBody},
+        test::{
+            INVOKE_KEY, MockRuntime, get_ipc_response, mock_builder, mock_context, noop_assets,
+        },
+        webview::InvokeRequest,
     };
 
     use crate::state::AppState;
@@ -154,18 +169,32 @@ mod tests {
             ])
             .build(mock_context(noop_assets()))
             .unwrap();
-        let webview = WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
+        let webview = WebviewWindowBuilder::new(&app, "main", Default::default())
+            .build()
+            .unwrap();
 
         // Argument names exactly as NotesService.saveBookmark sends them.
         let id = "5f1d2c7e-0000-4000-8000-000000003016";
-        let payload = json!({ "id": id, "book": "John", "chapter": 3, "verse": 16, "label": "John 3:16" });
+        let payload =
+            json!({ "id": id, "book": "John", "chapter": 3, "verse": 16, "label": "John 3:16" });
 
         let saved = call(&webview, "save_bookmark", payload.clone()).unwrap();
-        assert_eq!(saved["id"], id, "the backend must return the id it persisted");
-        assert_eq!(saved["reference"], json!({ "book": "John", "chapter": 3, "verse": 16 }));
+        assert_eq!(
+            saved["id"], id,
+            "the backend must return the id it persisted"
+        );
+        assert_eq!(
+            saved["reference"],
+            json!({ "book": "John", "chapter": 3, "verse": 16 })
+        );
         assert_eq!(saved["label"], "John 3:16");
-        let created_at = saved["created_at"].as_str().expect("created_at must be a string");
-        assert!(chrono::DateTime::parse_from_rfc3339(created_at).is_ok(), "not RFC 3339: {created_at}");
+        let created_at = saved["created_at"]
+            .as_str()
+            .expect("created_at must be a string");
+        assert!(
+            chrono::DateTime::parse_from_rfc3339(created_at).is_ok(),
+            "not RFC 3339: {created_at}"
+        );
         let original_created_at = created_at.to_string();
 
         // A retry with the same id replaces the record instead of duplicating it
@@ -173,8 +202,13 @@ mod tests {
         std::thread::sleep(std::time::Duration::from_millis(100)); // ensure time passes
         let retried = call(&webview, "save_bookmark", payload).unwrap();
         assert_eq!(retried["id"], id);
-        let retried_created_at = retried["created_at"].as_str().expect("created_at must be a string");
-        assert_eq!(retried_created_at, original_created_at, "retry must preserve original created_at");
+        let retried_created_at = retried["created_at"]
+            .as_str()
+            .expect("created_at must be a string");
+        assert_eq!(
+            retried_created_at, original_created_at,
+            "retry must preserve original created_at"
+        );
 
         let listed = call(&webview, "get_bookmarks", json!({})).unwrap();
         assert_eq!(listed.as_array().unwrap().len(), 1);
@@ -182,12 +216,21 @@ mod tests {
         assert_eq!(listed[0]["created_at"], original_created_at);
 
         // Delete by the returned id, then refresh: it must not reappear.
-        assert_eq!(call(&webview, "delete_bookmark", json!({ "id": id })).unwrap(), Value::Null);
-        assert_eq!(call(&webview, "get_bookmarks", json!({})).unwrap(), json!([]));
+        assert_eq!(
+            call(&webview, "delete_bookmark", json!({ "id": id })).unwrap(),
+            Value::Null
+        );
+        assert_eq!(
+            call(&webview, "get_bookmarks", json!({})).unwrap(),
+            json!([])
+        );
 
         // A second delete is a plain-string error, which is what invoke() rejects with.
         let err = call(&webview, "delete_bookmark", json!({ "id": id })).unwrap_err();
-        assert_eq!(err, json!(format!("Database error: bookmark {id} not found")));
+        assert_eq!(
+            err,
+            json!(format!("Database error: bookmark {id} not found"))
+        );
 
         drop(webview);
         drop(app);

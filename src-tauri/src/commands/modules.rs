@@ -1,6 +1,6 @@
-use tauri::State;
-use bible_core::{models::Module, traits::BibleEngine};
 use crate::state::AppState;
+use bible_core::{models::Module, traits::BibleEngine};
+use tauri::State;
 
 #[tauri::command]
 pub fn list_modules(state: State<'_, AppState>) -> Result<Vec<Module>, String> {
@@ -25,14 +25,9 @@ pub async fn install_module(
 
 /// Remove a module's files and purge it from the engine and search index.
 #[tauri::command]
-pub async fn uninstall_module(
-    state: State<'_, AppState>,
-    id: String,
-) -> Result<(), String> {
+pub async fn uninstall_module(state: State<'_, AppState>, id: String) -> Result<(), String> {
     let state = state.inner().clone();
-    tauri::async_runtime::spawn_blocking(move || {
-        state.uninstall(&id).map_err(|e| e.to_string())
-    })
-    .await
-    .map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || state.uninstall(&id).map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| e.to_string())?
 }

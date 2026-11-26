@@ -28,7 +28,9 @@ pub fn validate_module_id(id: &str) -> Result<()> {
         && id.len() <= 64
         && id != "."
         && id != ".."
-        && id.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.'));
+        && id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.'));
     if ok {
         Ok(())
     } else {
@@ -52,7 +54,9 @@ fn conf_sections(text: &str) -> Vec<String> {
 fn conf_value(text: &str, key: &str) -> Option<String> {
     text.lines().find_map(|l| {
         let (k, v) = l.split_once('=')?;
-        k.trim().eq_ignore_ascii_case(key).then(|| v.trim().to_string())
+        k.trim()
+            .eq_ignore_ascii_case(key)
+            .then(|| v.trim().to_string())
     })
 }
 
@@ -70,14 +74,19 @@ fn data_path_under(root: &Path, data_path: &str) -> Option<PathBuf> {
 }
 
 fn data_present(root: &Path, data_path: &str) -> bool {
-    let Some(p) = data_path_under(root, data_path) else { return false };
+    let Some(p) = data_path_under(root, data_path) else {
+        return false;
+    };
     if p.exists() {
         return true;
     }
     // Lexicon-style DataPath names a file prefix, not a directory.
     match (p.parent(), p.file_name().and_then(|n| n.to_str())) {
         (Some(dir), Some(prefix)) => fs::read_dir(dir)
-            .map(|rd| rd.flatten().any(|e| e.file_name().to_string_lossy().starts_with(prefix)))
+            .map(|rd| {
+                rd.flatten()
+                    .any(|e| e.file_name().to_string_lossy().starts_with(prefix))
+            })
             .unwrap_or(false),
         _ => false,
     }
@@ -134,7 +143,9 @@ impl ModuleManager {
         #[cfg(not(feature = "download"))]
         {
             let _ = source_url;
-            Err(BibleError::Engine("download feature not enabled".to_string()))
+            Err(BibleError::Engine(
+                "download feature not enabled".to_string(),
+            ))
         }
 
         #[cfg(feature = "download")]
@@ -149,7 +160,10 @@ impl ModuleManager {
                 .send()
                 .and_then(|r| r.error_for_status())
                 .map_err(engine_err)?;
-            if response.content_length().is_some_and(|n| n > MAX_ARCHIVE_BYTES) {
+            if response
+                .content_length()
+                .is_some_and(|n| n > MAX_ARCHIVE_BYTES)
+            {
                 return Err(BibleError::Engine("archive exceeds the size limit".into()));
             }
             let mut bytes = Vec::new();
@@ -174,15 +188,25 @@ impl ModuleManager {
             archive
                 .by_index(i)
                 .map(|f| {
-                    f.enclosed_name()
-                        .is_some_and(|p| p.starts_with("mods.d") && p.extension().is_some_and(|e| e.eq_ignore_ascii_case("conf")))
+                    f.enclosed_name().is_some_and(|p| {
+                        p.starts_with("mods.d")
+                            && p.extension()
+                                .is_some_and(|e| e.eq_ignore_ascii_case("conf"))
+                    })
                 })
                 .unwrap_or(false)
         });
 
-        let parent = self.sword_dir.parent().map(Path::to_path_buf).unwrap_or_else(std::env::temp_dir);
+        let parent = self
+            .sword_dir
+            .parent()
+            .map(Path::to_path_buf)
+            .unwrap_or_else(std::env::temp_dir);
         fs::create_dir_all(&parent)?;
-        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0);
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
         let staging = Staging(parent.join(format!(".staging-{id}-{nanos}")));
         fs::create_dir_all(&staging.0)?;
         extract_checked(&mut archive, &staging.0)?;
@@ -199,14 +223,19 @@ impl ModuleManager {
         let root = if staged.join("module.json").exists() {
             staged.to_path_buf()
         } else {
-            let mut dirs = fs::read_dir(staged)?.flatten().map(|e| e.path()).filter(|p| p.is_dir());
+            let mut dirs = fs::read_dir(staged)?
+                .flatten()
+                .map(|e| e.path())
+                .filter(|p| p.is_dir());
             match (dirs.next(), dirs.next()) {
                 (Some(d), None) if d.join("module.json").exists() => d,
                 _ => return Err(BibleError::Engine("archive has no module.json".into())),
             }
         };
         if !root.join("text.osis").exists() && !root.join("text.xml").exists() {
-            return Err(BibleError::Engine("archive has no text.osis or text.xml".into()));
+            return Err(BibleError::Engine(
+                "archive has no text.osis or text.xml".into(),
+            ));
         }
 
         let dest = self.xml_dir.join(id);
@@ -238,27 +267,38 @@ impl ModuleManager {
             .map_err(|_| BibleError::Engine("archive has no mods.d".into()))?
             .flatten()
             .map(|e| e.path())
-            .filter(|p| p.extension().is_some_and(|e| e.eq_ignore_ascii_case("conf")))
+            .filter(|p| {
+                p.extension()
+                    .is_some_and(|e| e.eq_ignore_ascii_case("conf"))
+            })
             .collect();
 
         let mut found_id = false;
         for conf in &confs {
             let Some(text) = read_conf(conf) else {
-                return Err(BibleError::Engine(format!("unreadable conf {:?}", conf.file_name())));
+                return Err(BibleError::Engine(format!(
+                    "unreadable conf {:?}",
+                    conf.file_name()
+                )));
             };
             for section in conf_sections(&text) {
                 if section.eq_ignore_ascii_case(id) {
                     found_id = true;
                 }
             }
-            let dp = conf_value(&text, "DataPath")
-                .ok_or_else(|| BibleError::Engine(format!("{:?} has no DataPath", conf.file_name())))?;
+            let dp = conf_value(&text, "DataPath").ok_or_else(|| {
+                BibleError::Engine(format!("{:?} has no DataPath", conf.file_name()))
+            })?;
             if !data_present(staged, &dp) {
-                return Err(BibleError::Engine(format!("module data missing from archive: {dp}")));
+                return Err(BibleError::Engine(format!(
+                    "module data missing from archive: {dp}"
+                )));
             }
         }
         if !found_id {
-            return Err(BibleError::Engine(format!("archive does not contain module '{id}'")));
+            return Err(BibleError::Engine(format!(
+                "archive does not contain module '{id}'"
+            )));
         }
 
         // Replace any previous install of the same module, then copy in.
@@ -275,7 +315,11 @@ impl ModuleManager {
         })();
         if let Err(e) = result {
             for path in created.iter().rev() {
-                let _ = if path.is_dir() { fs::remove_dir_all(path) } else { fs::remove_file(path) };
+                let _ = if path.is_dir() {
+                    fs::remove_dir_all(path)
+                } else {
+                    fs::remove_file(path)
+                };
             }
             return Err(engine_err(e));
         }
@@ -300,13 +344,20 @@ impl ModuleManager {
 
     /// Remove a SWORD module's conf and data. Returns whether anything was found.
     fn remove_sword_module(&self, id: &str) -> Result<bool> {
-        let Ok(rd) = fs::read_dir(self.sword_dir.join("mods.d")) else { return Ok(false) };
+        let Ok(rd) = fs::read_dir(self.sword_dir.join("mods.d")) else {
+            return Ok(false);
+        };
         for entry in rd.flatten() {
             let path = entry.path();
-            if !path.extension().is_some_and(|e| e.eq_ignore_ascii_case("conf")) {
+            if !path
+                .extension()
+                .is_some_and(|e| e.eq_ignore_ascii_case("conf"))
+            {
                 continue;
             }
-            let Some(text) = read_conf(&path) else { continue };
+            let Some(text) = read_conf(&path) else {
+                continue;
+            };
             let sections = conf_sections(&text);
             if !sections.iter().any(|s| s.eq_ignore_ascii_case(id)) {
                 continue;
@@ -315,7 +366,9 @@ impl ModuleManager {
                 match data_path_under(&self.sword_dir, &dp) {
                     Some(target) if target.is_dir() => fs::remove_dir_all(&target)?,
                     Some(target) => {
-                        if let (Some(dir), Some(prefix)) = (target.parent(), target.file_name().and_then(|n| n.to_str())) {
+                        if let (Some(dir), Some(prefix)) =
+                            (target.parent(), target.file_name().and_then(|n| n.to_str()))
+                        {
                             if let Ok(files) = fs::read_dir(dir) {
                                 for f in files.flatten() {
                                     if f.file_name().to_string_lossy().starts_with(prefix) {
@@ -325,7 +378,11 @@ impl ModuleManager {
                             }
                         }
                     }
-                    None => return Err(BibleError::Engine(format!("refusing unsafe DataPath '{dp}'"))),
+                    None => {
+                        return Err(BibleError::Engine(format!(
+                            "refusing unsafe DataPath '{dp}'"
+                        )))
+                    }
                 }
             }
             fs::remove_file(&path)?;
@@ -340,7 +397,10 @@ fn extract_checked<R: Read + Seek>(archive: &mut zip::ZipArchive<R>, dest: &Path
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).map_err(engine_err)?;
         let Some(rel) = file.enclosed_name() else {
-            return Err(BibleError::Engine(format!("unsafe path in archive: {}", file.name())));
+            return Err(BibleError::Engine(format!(
+                "unsafe path in archive: {}",
+                file.name()
+            )));
         };
         let out = dest.join(rel);
         if file.is_dir() {
@@ -384,13 +444,19 @@ mod tests {
 
     fn mgr(label: &str) -> (ModuleManager, PathBuf) {
         let base = tmp(label);
-        (ModuleManager::new(base.join("modules"), base.join("sword")), base)
+        (
+            ModuleManager::new(base.join("modules"), base.join("sword")),
+            base,
+        )
     }
 
     const CONF: &str = "[Demo]\nDataPath=./modules/texts/rawtext/demo/\nModDrv=RawText\n";
 
     fn sword_zip() -> Vec<u8> {
-        zip_of(&[("mods.d/demo.conf", CONF), ("modules/texts/rawtext/demo/ot.vss", "x")])
+        zip_of(&[
+            ("mods.d/demo.conf", CONF),
+            ("modules/texts/rawtext/demo/ot.vss", "x"),
+        ])
     }
 
     #[test]
@@ -408,8 +474,13 @@ mod tests {
         let (m, base) = mgr("sword_ok");
         m.install_from_bytes("Demo", sword_zip()).unwrap();
         assert!(base.join("sword/mods.d/demo.conf").exists());
-        assert!(base.join("sword/modules/texts/rawtext/demo/ot.vss").exists());
-        assert!(!base.join("modules/Demo").exists(), "must not land in the XML dir");
+        assert!(base
+            .join("sword/modules/texts/rawtext/demo/ot.vss")
+            .exists());
+        assert!(
+            !base.join("modules/Demo").exists(),
+            "must not land in the XML dir"
+        );
 
         m.uninstall("Demo").unwrap();
         assert!(!base.join("sword/mods.d/demo.conf").exists());
@@ -421,13 +492,18 @@ mod tests {
         let (m, base) = mgr("sword_two");
         m.install_from_bytes("Demo", sword_zip()).unwrap();
         let other = zip_of(&[
-            ("mods.d/other.conf", "[Other]\nDataPath=./modules/texts/rawtext/other/\nModDrv=RawText\n"),
+            (
+                "mods.d/other.conf",
+                "[Other]\nDataPath=./modules/texts/rawtext/other/\nModDrv=RawText\n",
+            ),
             ("modules/texts/rawtext/other/ot.vss", "y"),
         ]);
         m.install_from_bytes("Other", other).unwrap();
         m.uninstall("Demo").unwrap();
         assert!(base.join("sword/mods.d/other.conf").exists());
-        assert!(base.join("sword/modules/texts/rawtext/other/ot.vss").exists());
+        assert!(base
+            .join("sword/modules/texts/rawtext/other/ot.vss")
+            .exists());
     }
 
     #[test]
@@ -442,21 +518,40 @@ mod tests {
     fn archive_for_a_different_module_is_rejected() {
         let (m, base) = mgr("sword_wrong_id");
         assert!(m.install_from_bytes("Other", sword_zip()).is_err());
-        assert!(!base.join("sword/mods.d").exists() || fs::read_dir(base.join("sword/mods.d")).unwrap().next().is_none());
+        assert!(
+            !base.join("sword/mods.d").exists()
+                || fs::read_dir(base.join("sword/mods.d"))
+                    .unwrap()
+                    .next()
+                    .is_none()
+        );
     }
 
     #[test]
     fn corrupt_zip_is_rejected_and_leaves_no_staging() {
         let (m, base) = mgr("corrupt");
         assert!(m.install_from_bytes("Demo", b"not a zip".to_vec()).is_err());
-        let leftovers: Vec<_> = fs::read_dir(&base).unwrap().flatten().map(|e| e.file_name()).collect();
-        assert!(leftovers.iter().all(|n| !n.to_string_lossy().starts_with(".staging")), "{leftovers:?}");
+        let leftovers: Vec<_> = fs::read_dir(&base)
+            .unwrap()
+            .flatten()
+            .map(|e| e.file_name())
+            .collect();
+        assert!(
+            leftovers
+                .iter()
+                .all(|n| !n.to_string_lossy().starts_with(".staging")),
+            "{leftovers:?}"
+        );
     }
 
     #[test]
     fn zip_slip_entry_is_rejected() {
         let (m, base) = mgr("zip_slip");
-        let evil = zip_of(&[("../evil.txt", "x"), ("module.json", "{}"), ("text.osis", "<osis/>")]);
+        let evil = zip_of(&[
+            ("../evil.txt", "x"),
+            ("module.json", "{}"),
+            ("text.osis", "<osis/>"),
+        ]);
         assert!(m.install_from_bytes("Demo", evil).is_err());
         assert!(!base.join("evil.txt").exists());
         assert!(!base.parent().unwrap().join("evil.txt").exists());
@@ -468,7 +563,10 @@ mod tests {
         let z = |t: &str| zip_of(&[("module.json", r#"{"id":"X"}"#), ("text.osis", t)]);
         m.install_from_bytes("X", z("one")).unwrap();
         m.install_from_bytes("X", z("two")).unwrap();
-        assert_eq!(fs::read_to_string(base.join("modules/X/text.osis")).unwrap(), "two");
+        assert_eq!(
+            fs::read_to_string(base.join("modules/X/text.osis")).unwrap(),
+            "two"
+        );
         m.uninstall("X").unwrap();
         assert!(!base.join("modules/X").exists());
     }
@@ -476,14 +574,19 @@ mod tests {
     #[test]
     fn xml_archive_without_text_is_rejected() {
         let (m, base) = mgr("xml_bad");
-        assert!(m.install_from_bytes("X", zip_of(&[("module.json", "{}")])).is_err());
+        assert!(m
+            .install_from_bytes("X", zip_of(&[("module.json", "{}")]))
+            .is_err());
         assert!(!base.join("modules/X").exists());
     }
 
     #[test]
     fn uninstall_unknown_module_errors() {
         let (m, _base) = mgr("unknown");
-        assert!(matches!(m.uninstall("Nope"), Err(BibleError::ModuleNotFound(_))));
+        assert!(matches!(
+            m.uninstall("Nope"),
+            Err(BibleError::ModuleNotFound(_))
+        ));
         assert!(m.uninstall("../etc").is_err());
     }
 }

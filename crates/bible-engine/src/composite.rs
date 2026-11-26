@@ -54,7 +54,12 @@ impl CompositeEngine {
         {
             let mut all = self.native.all_verses_by_module();
             let native_ids: Vec<String> = all.iter().map(|(id, _)| id.clone()).collect();
-            all.extend(self.xml.all_verses_by_module().into_iter().filter(|(id, _)| !native_ids.contains(id)));
+            all.extend(
+                self.xml
+                    .all_verses_by_module()
+                    .into_iter()
+                    .filter(|(id, _)| !native_ids.contains(id)),
+            );
             all
         }
         #[cfg(not(feature = "native-sword"))]
@@ -128,12 +133,18 @@ mod tests {
 
     #[test]
     fn xml_only_library_routes_to_xml_engine() {
-        let base = std::env::temp_dir().join("vera_composite_tests").join("xml_only");
+        let base = std::env::temp_dir()
+            .join("vera_composite_tests")
+            .join("xml_only");
         let _ = std::fs::remove_dir_all(&base);
         let xml = base.join("modules");
         let m = xml.join("X");
         std::fs::create_dir_all(&m).unwrap();
-        std::fs::write(m.join("module.json"), r#"{"id":"X","name":"X","type":"Bible","lang":"en"}"#).unwrap();
+        std::fs::write(
+            m.join("module.json"),
+            r#"{"id":"X","name":"X","type":"Bible","lang":"en"}"#,
+        )
+        .unwrap();
         std::fs::write(
             m.join("text.osis"),
             r#"<osis><osisText><div type="book" osisID="Gen"><chapter osisID="Gen.1"><verse osisID="Gen.1.1">xml text</verse></chapter></div></osisText></osis>"#,
@@ -141,8 +152,14 @@ mod tests {
         .unwrap();
 
         let e = CompositeEngine::new(xml, base.join("sword"));
-        assert_eq!(e.get_chapter("X", "Gen", 1).unwrap().verses[0].text, "xml text");
+        assert_eq!(
+            e.get_chapter("X", "Gen", 1).unwrap().verses[0].text,
+            "xml text"
+        );
         assert_eq!(e.list_modules().unwrap().len(), 1);
-        assert!(matches!(e.get_chapter("NOPE", "Gen", 1), Err(BibleError::ModuleNotFound(_))));
+        assert!(matches!(
+            e.get_chapter("NOPE", "Gen", 1),
+            Err(BibleError::ModuleNotFound(_))
+        ));
     }
 }

@@ -103,7 +103,10 @@ fn tag_name(tag: &str) -> String {
 }
 
 fn is_block(name: &str) -> bool {
-    matches!(name, "p" | "lb" | "l" | "br" | "div" | "lg" | "milestone" | "item" | "list")
+    matches!(
+        name,
+        "p" | "lb" | "l" | "br" | "div" | "lg" | "milestone" | "item" | "list"
+    )
 }
 
 fn collapse_ws(s: &str) -> String {
@@ -162,37 +165,54 @@ mod tests {
     #[test]
     fn osis_strongs_words_keep_text() {
         let raw = r#"<w lemma="strong:H07225" morph="x">In the beginning</w> <w lemma="strong:H0430">God</w> created"#;
-        assert_eq!(strip_markup(raw, MarkupKind::Osis), "In the beginning God created");
+        assert_eq!(
+            strip_markup(raw, MarkupKind::Osis),
+            "In the beginning God created"
+        );
     }
 
     #[test]
     fn osis_notes_and_titles_dropped_including_nested_markup() {
-        let raw = r#"<title>Psalm</title>Blessed<note type="x">a <hi>footnote</hi></note> is the man"#;
+        let raw =
+            r#"<title>Psalm</title>Blessed<note type="x">a <hi>footnote</hi></note> is the man"#;
         assert_eq!(strip_markup(raw, MarkupKind::Osis), "Blessed is the man");
     }
 
     #[test]
     fn osis_inline_tags_do_not_join_or_split_words() {
-        let raw = r#"the <transChange type="added">LORD</transChange>'s <divineName>Lord</divineName>"#;
+        let raw =
+            r#"the <transChange type="added">LORD</transChange>'s <divineName>Lord</divineName>"#;
         assert_eq!(strip_markup(raw, MarkupKind::Osis), "the LORD's Lord");
     }
 
     #[test]
     fn osis_line_breaks_become_spaces() {
         let raw = r#"line one<lb/>line two<p/>three"#;
-        assert_eq!(strip_markup(raw, MarkupKind::Osis), "line one line two three");
+        assert_eq!(
+            strip_markup(raw, MarkupKind::Osis),
+            "line one line two three"
+        );
     }
 
     #[test]
     fn entities_decode() {
-        assert_eq!(strip_markup("a &amp; b &lt;c&gt; &#8212; &#x2014;", MarkupKind::Osis), "a & b <c> — —");
-        assert_eq!(strip_markup("fish & chips", MarkupKind::Osis), "fish & chips");
+        assert_eq!(
+            strip_markup("a &amp; b &lt;c&gt; &#8212; &#x2014;", MarkupKind::Osis),
+            "a & b <c> — —"
+        );
+        assert_eq!(
+            strip_markup("fish & chips", MarkupKind::Osis),
+            "fish & chips"
+        );
     }
 
     #[test]
     fn gbf_footnotes_and_strongs_dropped() {
         let raw = "In the beginning<WH07225> God<RF>a note<Rf> created<CM>";
-        assert_eq!(strip_markup(raw, MarkupKind::Gbf), "In the beginning God created");
+        assert_eq!(
+            strip_markup(raw, MarkupKind::Gbf),
+            "In the beginning God created"
+        );
     }
 
     #[test]

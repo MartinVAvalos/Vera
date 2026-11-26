@@ -1,8 +1,4 @@
-use std::{
-    collections::HashMap,
-    path::PathBuf,
-    sync::RwLock,
-};
+use std::{collections::HashMap, path::PathBuf, sync::RwLock};
 
 use bible_core::{
     error::BibleError,
@@ -28,12 +24,12 @@ pub struct ModuleMeta {
 impl ModuleMeta {
     fn as_module_type(&self) -> ModuleType {
         match self.module_type.to_lowercase().as_str() {
-            "bible"           => ModuleType::Bible,
-            "commentary"      => ModuleType::Commentary,
-            "genbook"         => ModuleType::GenBook,
-            "lexicon"         => ModuleType::Lexicon,
+            "bible" => ModuleType::Bible,
+            "commentary" => ModuleType::Commentary,
+            "genbook" => ModuleType::GenBook,
+            "lexicon" => ModuleType::Lexicon,
             "dailydevotion" | "dailydevoional" => ModuleType::DailyDevotional,
-            _                 => ModuleType::GenBook,
+            _ => ModuleType::GenBook,
         }
     }
 }
@@ -48,7 +44,8 @@ struct ModuleIndex {
 
 impl ModuleIndex {
     fn chapter_count(&self, book: &str) -> u32 {
-        self.data.get(book)
+        self.data
+            .get(book)
             .map(|chs| chs.keys().copied().max().unwrap_or(0))
             .unwrap_or(0)
     }
@@ -56,7 +53,9 @@ impl ModuleIndex {
     fn verses(&self) -> Vec<Verse> {
         let mut verses = Vec::new();
         for book in &self.book_order {
-            let Some(chs) = self.data.get(book) else { continue };
+            let Some(chs) = self.data.get(book) else {
+                continue;
+            };
             for (&ch, vs) in chs {
                 for (&vn, text) in vs {
                     verses.push(Verse {
@@ -80,7 +79,10 @@ pub struct SwordEngine {
 
 impl SwordEngine {
     pub fn new(data_dir: PathBuf) -> Self {
-        let engine = Self { data_dir, modules: RwLock::new(HashMap::new()) };
+        let engine = Self {
+            data_dir,
+            modules: RwLock::new(HashMap::new()),
+        };
         engine.load_all();
         engine
     }
@@ -94,36 +96,52 @@ impl SwordEngine {
     /// Return all loaded verses grouped by module_id, for search indexing.
     pub fn all_verses_by_module(&self) -> Vec<(String, Vec<Verse>)> {
         let m = self.modules.read().unwrap();
-        m.iter().map(|(id, idx)| (id.clone(), idx.verses())).collect()
+        m.iter()
+            .map(|(id, idx)| (id.clone(), idx.verses()))
+            .collect()
     }
 
     /// Verses of one loaded module, for search indexing.
     pub fn verses_for_module(&self, module_id: &str) -> Option<Vec<Verse>> {
-        self.modules.read().unwrap().get(module_id).map(ModuleIndex::verses)
+        self.modules
+            .read()
+            .unwrap()
+            .get(module_id)
+            .map(ModuleIndex::verses)
     }
 
     fn load_all(&self) {
-        if !self.data_dir.exists() { return; }
+        if !self.data_dir.exists() {
+            return;
+        }
         let entries = match std::fs::read_dir(&self.data_dir) {
-            Ok(e)  => e,
-            Err(e) => { warn!("Cannot read modules dir: {e}"); return; }
+            Ok(e) => e,
+            Err(e) => {
+                warn!("Cannot read modules dir: {e}");
+                return;
+            }
         };
 
         let mut loaded = self.modules.write().unwrap();
         for entry in entries.flatten() {
             let path = entry.path();
-            if !path.is_dir() { continue; }
+            if !path.is_dir() {
+                continue;
+            }
 
             let meta_path = path.join("module.json");
             let osis_path = path.join("text.osis");
-            let zef_path  = path.join("text.xml");
+            let zef_path = path.join("text.xml");
 
             let meta: ModuleMeta = match std::fs::read_to_string(&meta_path)
                 .ok()
                 .and_then(|s| serde_json::from_str(&s).ok())
             {
                 Some(m) => m,
-                None    => { warn!("Missing/invalid module.json at {:?}", meta_path); continue; }
+                None => {
+                    warn!("Missing/invalid module.json at {:?}", meta_path);
+                    continue;
+                }
             };
 
             let text_file = if osis_path.exists() {
@@ -131,12 +149,15 @@ impl SwordEngine {
             } else if zef_path.exists() {
                 &zef_path
             } else {
-                continue
+                continue;
             };
 
             let xml = match std::fs::read_to_string(text_file) {
-                Ok(s)  => s,
-                Err(e) => { warn!("Cannot read {:?}: {e}", text_file); continue; }
+                Ok(s) => s,
+                Err(e) => {
+                    warn!("Cannot read {:?}: {e}", text_file);
+                    continue;
+                }
             };
 
             let verses = if text_file == &osis_path {
@@ -146,9 +167,16 @@ impl SwordEngine {
             };
 
             match verses {
-                Err(e) => { warn!("Parse error in module '{}': {e}", meta.id); }
+                Err(e) => {
+                    warn!("Parse error in module '{}': {e}", meta.id);
+                }
                 Ok(vs) => {
-                    info!("Loaded module '{}' ({}) — {} verses", meta.id, meta.module_type, vs.len());
+                    info!(
+                        "Loaded module '{}' ({}) — {} verses",
+                        meta.id,
+                        meta.module_type,
+                        vs.len()
+                    );
                     loaded.insert(meta.id.clone(), build_index(meta, vs));
                 }
             }
@@ -185,11 +213,17 @@ fn build_index(meta: ModuleMeta, verses: Vec<Verse>) -> ModuleIndex {
         }
     }
 
-    ModuleIndex { meta, book_order, book_names, data }
+    ModuleIndex {
+        meta,
+        book_order,
+        book_names,
+        data,
+    }
 }
 
 fn canonical_name(id: &str) -> String {
-    BOOK_NAMES.iter()
+    BOOK_NAMES
+        .iter()
         .find(|(abbr, _)| abbr.eq_ignore_ascii_case(id))
         .map(|(_, name)| (*name).to_string())
         .unwrap_or_else(|| id.to_string())
@@ -211,7 +245,8 @@ impl BibleEngine for SwordEngine {
                 })
                 .ok_or_else(|| {
                     BibleError::ModuleNotFound(format!(
-                        "{} {}:{} in '{}'", r.book, r.chapter, r.verse, module_id
+                        "{} {}:{} in '{}'",
+                        r.book, r.chapter, r.verse, module_id
                     ))
                 })
         })
@@ -219,45 +254,63 @@ impl BibleEngine for SwordEngine {
 
     fn get_chapter(&self, module_id: &str, book: &str, chapter: u32) -> Result<Chapter> {
         self.with_module(module_id, |idx| {
-            let v_map = idx.data
+            let v_map = idx
+                .data
                 .get(book)
                 .and_then(|chs| chs.get(&chapter))
                 .ok_or_else(|| {
                     BibleError::ModuleNotFound(format!("{} {} in '{}'", book, chapter, module_id))
                 })?;
 
-            let mut verses: Vec<Verse> = v_map.iter().map(|(&vn, text)| Verse {
+            let mut verses: Vec<Verse> = v_map
+                .iter()
+                .map(|(&vn, text)| Verse {
+                    book: book.to_string(),
+                    chapter,
+                    verse: vn,
+                    text: text.clone(),
+                    translation: idx.meta.name.clone(),
+                })
+                .collect();
+            verses.sort_by_key(|v| v.verse);
+            Ok(Chapter {
                 book: book.to_string(),
                 chapter,
-                verse: vn,
-                text: text.clone(),
-                translation: idx.meta.name.clone(),
-            }).collect();
-            verses.sort_by_key(|v| v.verse);
-            Ok(Chapter { book: book.to_string(), chapter, verses })
+                verses,
+            })
         })
     }
 
     fn list_books(&self, module_id: &str) -> Result<Vec<BibleBook>> {
         self.with_module(module_id, |idx| {
-            Ok(idx.book_order.iter().map(|id| BibleBook {
-                id: id.clone(),
-                name: idx.book_names.get(id).cloned().unwrap_or_else(|| id.clone()),
-                chapters: idx.chapter_count(id),
-            }).collect())
+            Ok(idx
+                .book_order
+                .iter()
+                .map(|id| BibleBook {
+                    id: id.clone(),
+                    name: idx
+                        .book_names
+                        .get(id)
+                        .cloned()
+                        .unwrap_or_else(|| id.clone()),
+                    chapters: idx.chapter_count(id),
+                })
+                .collect())
         })
     }
 
     fn list_modules(&self) -> Result<Vec<Module>> {
         let m = self.modules.read().unwrap();
-        Ok(m.values().map(|idx| Module {
-            id: idx.meta.id.clone(),
-            name: idx.meta.name.clone(),
-            module_type: idx.meta.as_module_type(),
-            lang: idx.meta.lang.clone(),
-            description: idx.meta.description.clone(),
-            installed: true,
-        }).collect())
+        Ok(m.values()
+            .map(|idx| Module {
+                id: idx.meta.id.clone(),
+                name: idx.meta.name.clone(),
+                module_type: idx.meta.as_module_type(),
+                lang: idx.meta.lang.clone(),
+                description: idx.meta.description.clone(),
+                installed: true,
+            })
+            .collect())
     }
 
     fn install_module(&self, id: &str) -> Result<()> {
@@ -269,27 +322,81 @@ impl BibleEngine for SwordEngine {
 }
 
 static BOOK_NAMES: &[(&str, &str)] = &[
-    ("Gen","Genesis"),("Exod","Exodus"),("Lev","Leviticus"),("Num","Numbers"),
-    ("Deut","Deuteronomy"),("Josh","Joshua"),("Judg","Judges"),("Ruth","Ruth"),
-    ("1Sam","1 Samuel"),("2Sam","2 Samuel"),("1Kgs","1 Kings"),("2Kgs","2 Kings"),
-    ("1Chr","1 Chronicles"),("2Chr","2 Chronicles"),("Ezra","Ezra"),("Neh","Nehemiah"),
-    ("Esth","Esther"),("Job","Job"),("Ps","Psalms"),("Prov","Proverbs"),
-    ("Eccl","Ecclesiastes"),("Song","Song of Solomon"),("Isa","Isaiah"),
-    ("Jer","Jeremiah"),("Lam","Lamentations"),("Ezek","Ezekiel"),("Dan","Daniel"),
-    ("Hos","Hosea"),("Joel","Joel"),("Amos","Amos"),("Obad","Obadiah"),
-    ("Jonah","Jonah"),("Mic","Micah"),("Nah","Nahum"),("Hab","Habakkuk"),
-    ("Zeph","Zephaniah"),("Hag","Haggai"),("Zech","Zechariah"),("Mal","Malachi"),
+    ("Gen", "Genesis"),
+    ("Exod", "Exodus"),
+    ("Lev", "Leviticus"),
+    ("Num", "Numbers"),
+    ("Deut", "Deuteronomy"),
+    ("Josh", "Joshua"),
+    ("Judg", "Judges"),
+    ("Ruth", "Ruth"),
+    ("1Sam", "1 Samuel"),
+    ("2Sam", "2 Samuel"),
+    ("1Kgs", "1 Kings"),
+    ("2Kgs", "2 Kings"),
+    ("1Chr", "1 Chronicles"),
+    ("2Chr", "2 Chronicles"),
+    ("Ezra", "Ezra"),
+    ("Neh", "Nehemiah"),
+    ("Esth", "Esther"),
+    ("Job", "Job"),
+    ("Ps", "Psalms"),
+    ("Prov", "Proverbs"),
+    ("Eccl", "Ecclesiastes"),
+    ("Song", "Song of Solomon"),
+    ("Isa", "Isaiah"),
+    ("Jer", "Jeremiah"),
+    ("Lam", "Lamentations"),
+    ("Ezek", "Ezekiel"),
+    ("Dan", "Daniel"),
+    ("Hos", "Hosea"),
+    ("Joel", "Joel"),
+    ("Amos", "Amos"),
+    ("Obad", "Obadiah"),
+    ("Jonah", "Jonah"),
+    ("Mic", "Micah"),
+    ("Nah", "Nahum"),
+    ("Hab", "Habakkuk"),
+    ("Zeph", "Zephaniah"),
+    ("Hag", "Haggai"),
+    ("Zech", "Zechariah"),
+    ("Mal", "Malachi"),
     // Deuterocanon
-    ("Tob","Tobit"),("Jdt","Judith"),("1Macc","1 Maccabees"),("2Macc","2 Maccabees"),
-    ("Wis","Wisdom"),("Sir","Sirach"),("Bar","Baruch"),
+    ("Tob", "Tobit"),
+    ("Jdt", "Judith"),
+    ("1Macc", "1 Maccabees"),
+    ("2Macc", "2 Maccabees"),
+    ("Wis", "Wisdom"),
+    ("Sir", "Sirach"),
+    ("Bar", "Baruch"),
     // NT
-    ("Matt","Matthew"),("Mark","Mark"),("Luke","Luke"),("John","John"),
-    ("Acts","Acts"),("Rom","Romans"),("1Cor","1 Corinthians"),("2Cor","2 Corinthians"),
-    ("Gal","Galatians"),("Eph","Ephesians"),("Phil","Philippians"),("Col","Colossians"),
-    ("1Thess","1 Thessalonians"),("2Thess","2 Thessalonians"),("1Tim","1 Timothy"),
-    ("2Tim","2 Timothy"),("Titus","Titus"),("Phlm","Philemon"),("Heb","Hebrews"),
-    ("Jas","James"),("1Pet","1 Peter"),("2Pet","2 Peter"),("1John","1 John"),
-    ("2John","2 John"),("3John","3 John"),("Jude","Jude"),("Rev","Revelation"),
+    ("Matt", "Matthew"),
+    ("Mark", "Mark"),
+    ("Luke", "Luke"),
+    ("John", "John"),
+    ("Acts", "Acts"),
+    ("Rom", "Romans"),
+    ("1Cor", "1 Corinthians"),
+    ("2Cor", "2 Corinthians"),
+    ("Gal", "Galatians"),
+    ("Eph", "Ephesians"),
+    ("Phil", "Philippians"),
+    ("Col", "Colossians"),
+    ("1Thess", "1 Thessalonians"),
+    ("2Thess", "2 Thessalonians"),
+    ("1Tim", "1 Timothy"),
+    ("2Tim", "2 Timothy"),
+    ("Titus", "Titus"),
+    ("Phlm", "Philemon"),
+    ("Heb", "Hebrews"),
+    ("Jas", "James"),
+    ("1Pet", "1 Peter"),
+    ("2Pet", "2 Peter"),
+    ("1John", "1 John"),
+    ("2John", "2 John"),
+    ("3John", "3 John"),
+    ("Jude", "Jude"),
+    ("Rev", "Revelation"),
 ];
 
 #[cfg(test)]
@@ -334,9 +441,7 @@ mod tests {
     const META_B: &str = r#"{"id":"MOD_B","name":"Module B","type":"Bible","lang":"en"}"#;
 
     fn tmp_dir(label: &str) -> PathBuf {
-        let dir = std::env::temp_dir()
-            .join("vera_engine_tests")
-            .join(label);
+        let dir = std::env::temp_dir().join("vera_engine_tests").join(label);
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         dir
@@ -366,13 +471,19 @@ mod tests {
         let ch_a = engine.get_chapter("MOD_A", "Gen", 1).expect("MOD_A Gen 1");
         let ch_b = engine.get_chapter("MOD_B", "Gen", 1).expect("MOD_B Gen 1");
 
-        assert_eq!(ch_a.verses[0].text, "Module A verse one.",
-            "MOD_A should return Module A's text");
-        assert_eq!(ch_b.verses[0].text, "Module B verse one — different text.",
-            "MOD_B should return Module B's text");
+        assert_eq!(
+            ch_a.verses[0].text, "Module A verse one.",
+            "MOD_A should return Module A's text"
+        );
+        assert_eq!(
+            ch_b.verses[0].text, "Module B verse one — different text.",
+            "MOD_B should return Module B's text"
+        );
         // Cross-contamination check
-        assert_ne!(ch_a.verses[0].text, ch_b.verses[0].text,
-            "Modules must not share text");
+        assert_ne!(
+            ch_a.verses[0].text, ch_b.verses[0].text,
+            "Modules must not share text"
+        );
     }
 
     #[test]
@@ -383,8 +494,14 @@ mod tests {
         assert!(result.is_err(), "Unknown module must return an error");
         // Verify text from known modules did not leak
         let err_msg = result.unwrap_err().to_string();
-        assert!(!err_msg.contains("Module A"), "Error must not expose MOD_A text");
-        assert!(!err_msg.contains("Module B"), "Error must not expose MOD_B text");
+        assert!(
+            !err_msg.contains("Module A"),
+            "Error must not expose MOD_A text"
+        );
+        assert!(
+            !err_msg.contains("Module B"),
+            "Error must not expose MOD_B text"
+        );
     }
 
     #[test]
@@ -396,13 +513,20 @@ mod tests {
         assert!(result.is_err(), "Missing book must return error");
         // MOD_B has Gen but MOD_A should not fall back to it
         let result2 = engine.get_chapter("MOD_A", "Gen", 99);
-        assert!(result2.is_err(), "Missing chapter must return error, not text from MOD_B");
+        assert!(
+            result2.is_err(),
+            "Missing chapter must return error, not text from MOD_B"
+        );
     }
 
     #[test]
     fn get_verse_isolated_to_module() {
         let (engine, _dir) = engine_with_two_modules("iso_verse");
-        let r = bible_core::models::BibleRef { book: "Gen".into(), chapter: 1, verse: 1 };
+        let r = bible_core::models::BibleRef {
+            book: "Gen".into(),
+            chapter: 1,
+            verse: 1,
+        };
 
         let va = engine.get_verse("MOD_A", &r).expect("MOD_A Gen 1:1");
         let vb = engine.get_verse("MOD_B", &r).expect("MOD_B Gen 1:1");
@@ -429,8 +553,10 @@ mod tests {
         assert_eq!(books_b[0].id, "Gen");
 
         // MOD_A's John must not appear in MOD_B's list
-        assert!(!books_b.iter().any(|b| b.id == "John"),
-            "John from MOD_A must not appear in MOD_B's book list");
+        assert!(
+            !books_b.iter().any(|b| b.id == "John"),
+            "John from MOD_A must not appear in MOD_B's book list"
+        );
     }
 
     #[test]
@@ -454,7 +580,10 @@ mod tests {
 
         // Must now return an error
         let result = engine.get_chapter("MOD_A", "Gen", 1);
-        assert!(result.is_err(), "Removed module must not be accessible after reload");
+        assert!(
+            result.is_err(),
+            "Removed module must not be accessible after reload"
+        );
     }
 
     #[test]

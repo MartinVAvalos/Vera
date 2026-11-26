@@ -94,7 +94,10 @@ impl Database {
             "SELECT id, book, chapter, verse, body, created_at, updated_at FROM notes"
         };
 
-        let mut stmt = self.conn.prepare(sql).map_err(|e| BibleError::Database(e.to_string()))?;
+        let mut stmt = self
+            .conn
+            .prepare(sql)
+            .map_err(|e| BibleError::Database(e.to_string()))?;
 
         let rows = if let Some(r) = reference {
             stmt.query_map([r], |row| {
@@ -141,7 +144,11 @@ impl Database {
 
             notes.push(Note {
                 id,
-                reference: BibleRef { book, chapter, verse },
+                reference: BibleRef {
+                    book,
+                    chapter,
+                    verse,
+                },
                 body,
                 created_at,
                 updated_at,
@@ -207,7 +214,11 @@ impl Database {
 
             bookmarks.push(Bookmark {
                 id,
-                reference: BibleRef { book, chapter, verse },
+                reference: BibleRef {
+                    book,
+                    chapter,
+                    verse,
+                },
                 label,
                 created_at,
             });
@@ -218,7 +229,9 @@ impl Database {
     pub fn get_bookmark(&self, id: &str) -> Result<Option<Bookmark>> {
         let mut stmt = self
             .conn
-            .prepare("SELECT id, book, chapter, verse, label, created_at FROM bookmarks WHERE id = ?1")
+            .prepare(
+                "SELECT id, book, chapter, verse, label, created_at FROM bookmarks WHERE id = ?1",
+            )
             .map_err(|e| BibleError::Database(e.to_string()))?;
 
         let row = stmt
@@ -234,22 +247,29 @@ impl Database {
             .optional()
             .map_err(|e| BibleError::Database(e.to_string()))?;
 
-        Ok(row.map(|(id_str, book, chapter, verse, label, created_str)| {
-            let created_at = chrono::DateTime::parse_from_rfc3339(&created_str)
-                .map(|dt| dt.with_timezone(&chrono::Utc))
-                .unwrap_or_else(|_| chrono::Utc::now());
+        Ok(
+            row.map(|(id_str, book, chapter, verse, label, created_str)| {
+                let created_at = chrono::DateTime::parse_from_rfc3339(&created_str)
+                    .map(|dt| dt.with_timezone(&chrono::Utc))
+                    .unwrap_or_else(|_| chrono::Utc::now());
 
-            Bookmark {
-                id: id_str,
-                reference: BibleRef { book, chapter, verse },
-                label,
-                created_at,
-            }
-        }))
+                Bookmark {
+                    id: id_str,
+                    reference: BibleRef {
+                        book,
+                        chapter,
+                        verse,
+                    },
+                    label,
+                    created_at,
+                }
+            }),
+        )
     }
 
     pub fn delete_bookmark(&self, id: &str) -> Result<()> {
-        let affected = self.conn
+        let affected = self
+            .conn
             .execute("DELETE FROM bookmarks WHERE id = ?1", [id])
             .map_err(|e| BibleError::Database(e.to_string()))?;
         if affected == 0 {
@@ -288,7 +308,11 @@ impl Database {
                 .unwrap_or_else(|_| chrono::Utc::now());
             highlights.push(Highlight {
                 id,
-                reference: BibleRef { book, chapter, verse },
+                reference: BibleRef {
+                    book,
+                    chapter,
+                    verse,
+                },
                 color,
                 created_at,
             });
@@ -344,7 +368,11 @@ mod tests {
     }
 
     fn r(book: &str, c: u32, v: u32) -> BibleRef {
-        BibleRef { book: book.into(), chapter: c, verse: v }
+        BibleRef {
+            book: book.into(),
+            chapter: c,
+            verse: v,
+        }
     }
 
     #[test]
@@ -379,8 +407,18 @@ mod tests {
     #[test]
     fn bookmarks_and_highlights_round_trip_and_delete() {
         let db = open(&db_path("bm_hl"));
-        let bm = Bookmark { id: "bm-1".into(), reference: r("Gen", 1, 1), label: "start".into(), created_at: Utc::now() };
-        let hl = Highlight { id: "hl-1".into(), reference: r("Ps", 23, 1), color: "yellow".into(), created_at: Utc::now() };
+        let bm = Bookmark {
+            id: "bm-1".into(),
+            reference: r("Gen", 1, 1),
+            label: "start".into(),
+            created_at: Utc::now(),
+        };
+        let hl = Highlight {
+            id: "hl-1".into(),
+            reference: r("Ps", 23, 1),
+            color: "yellow".into(),
+            created_at: Utc::now(),
+        };
         db.save_bookmark(&bm).unwrap();
         db.save_highlight(&hl).unwrap();
         assert_eq!(db.get_bookmarks().unwrap()[0].id, "bm-1");
@@ -419,7 +457,8 @@ mod tests {
         let path = db_path("bm_reopen");
         {
             let db = open(&path);
-            db.save_bookmark(&make_bookmark("persist-id", "Gen")).unwrap();
+            db.save_bookmark(&make_bookmark("persist-id", "Gen"))
+                .unwrap();
         }
         let db = open(&path);
         let all = db.get_bookmarks().unwrap();
@@ -443,7 +482,10 @@ mod tests {
             matches!(&err, BibleError::Database(m) if m == "bookmark does-not-exist not found"),
             "unexpected error: {err}"
         );
-        assert_eq!(err.to_string(), "Database error: bookmark does-not-exist not found");
+        assert_eq!(
+            err.to_string(),
+            "Database error: bookmark does-not-exist not found"
+        );
     }
 
     #[test]
@@ -462,7 +504,10 @@ mod tests {
         let bm = make_bookmark("preserve-id", "Matt");
         db.save_bookmark(&bm).unwrap();
 
-        let first = db.get_bookmark("preserve-id").unwrap().expect("bookmark must exist");
+        let first = db
+            .get_bookmark("preserve-id")
+            .unwrap()
+            .expect("bookmark must exist");
         let original_created_at = first.created_at;
 
         // Sleep to ensure time passes, then save again
@@ -474,7 +519,10 @@ mod tests {
 
         let bookmarks = db.get_bookmarks().unwrap();
         assert_eq!(bookmarks.len(), 1, "retry must not duplicate the record");
-        assert_eq!(bookmarks[0].created_at, original_created_at, "database preserves whatever created_at we give it");
+        assert_eq!(
+            bookmarks[0].created_at, original_created_at,
+            "database preserves whatever created_at we give it"
+        );
 
         // But if we explicitly pass a new created_at (which the commands layer won't do),
         // the database will update it since it uses INSERT OR REPLACE
@@ -485,7 +533,10 @@ mod tests {
             created_at: Utc::now(),
         };
         db.save_bookmark(&bm_with_new_time).unwrap();
-        let updated = db.get_bookmark("preserve-id").unwrap().expect("bookmark must exist");
+        let updated = db
+            .get_bookmark("preserve-id")
+            .unwrap()
+            .expect("bookmark must exist");
         // The database layer will use the new timestamp since we passed it explicitly
         assert_eq!(updated.created_at, bm_with_new_time.created_at);
     }
@@ -529,7 +580,10 @@ mod tests {
         let n = &db.get_notes(None).unwrap()[0];
         let b = &db.get_bookmarks().unwrap()[0];
         let h = &db.get_highlights().unwrap()[0];
-        assert_eq!((n.id.as_str(), b.id.as_str(), h.id.as_str()), (LEGACY_ID, LEGACY_ID, LEGACY_ID));
+        assert_eq!(
+            (n.id.as_str(), b.id.as_str(), h.id.as_str()),
+            (LEGACY_ID, LEGACY_ID, LEGACY_ID)
+        );
         // The IPC payload is a plain JSON string, as the Angular models expect.
         assert_eq!(serde_json::to_value(n).unwrap()["id"], LEGACY_ID);
 
@@ -538,6 +592,9 @@ mod tests {
         edited.body = "new".into();
         db.save_note(&edited).unwrap();
         let all = db.get_notes(None).unwrap();
-        assert_eq!((all.len(), all[0].id.as_str(), all[0].body.as_str()), (1, LEGACY_ID, "new"));
+        assert_eq!(
+            (all.len(), all[0].id.as_str(), all[0].body.as_str()),
+            (1, LEGACY_ID, "new")
+        );
     }
 }

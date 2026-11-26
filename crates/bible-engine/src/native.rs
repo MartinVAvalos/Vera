@@ -44,7 +44,9 @@ fn markup_kind(m: Markup) -> MarkupKind {
 
 fn engine_err(module_id: &str, e: sword_modules::Error) -> BibleError {
     match e {
-        sword_modules::Error::ModuleNotFound(_) => BibleError::ModuleNotFound(module_id.to_string()),
+        sword_modules::Error::ModuleNotFound(_) => {
+            BibleError::ModuleNotFound(module_id.to_string())
+        }
         other => BibleError::Engine(format!("{module_id}: {other}")),
     }
 }
@@ -58,7 +60,11 @@ fn module_type(conf: &ModuleConf) -> Option<ModuleType> {
             let devotional = conf
                 .category()
                 .is_some_and(|c| c.to_ascii_lowercase().contains("devotional"));
-            Some(if devotional { ModuleType::DailyDevotional } else { ModuleType::GenBook })
+            Some(if devotional {
+                ModuleType::DailyDevotional
+            } else {
+                ModuleType::GenBook
+            })
         }
         ModuleKind::Unknown => None,
     }
@@ -117,7 +123,9 @@ impl NativeSwordEngine {
             if key.verse == 0 || key.chapter == 0 {
                 continue;
             }
-            let Some(book) = key.osis_book() else { continue };
+            let Some(book) = key.osis_book() else {
+                continue;
+            };
             let text = strip_markup(&entry.raw, kind);
             if text.is_empty() {
                 continue;
@@ -137,9 +145,15 @@ impl NativeSwordEngine {
 impl BibleEngine for NativeSwordEngine {
     fn get_verse(&self, module_id: &str, r: &BibleRef) -> Result<Verse> {
         let ch = self.get_chapter(module_id, &r.book, r.chapter)?;
-        ch.verses.into_iter().find(|v| v.verse == r.verse).ok_or_else(|| {
-            BibleError::ModuleNotFound(format!("{} {}:{} in '{}'", r.book, r.chapter, r.verse, module_id))
-        })
+        ch.verses
+            .into_iter()
+            .find(|v| v.verse == r.verse)
+            .ok_or_else(|| {
+                BibleError::ModuleNotFound(format!(
+                    "{} {}:{} in '{}'",
+                    r.book, r.chapter, r.verse, module_id
+                ))
+            })
     }
 
     fn get_chapter(&self, module_id: &str, book: &str, chapter: u32) -> Result<Chapter> {
@@ -148,7 +162,9 @@ impl BibleEngine for NativeSwordEngine {
 
         let def = vm.versification().book_by_osis(book).ok_or_else(missing)?;
         let chapter_no = u8::try_from(chapter).map_err(|_| missing())?;
-        let entries = vm.chapter(def.id, chapter_no).map_err(|e| engine_err(module_id, e))?;
+        let entries = vm
+            .chapter(def.id, chapter_no)
+            .map_err(|e| engine_err(module_id, e))?;
 
         let kind = markup_kind(vm.markup());
         let mut verses: Vec<Verse> = entries
@@ -170,7 +186,11 @@ impl BibleEngine for NativeSwordEngine {
             return Err(missing());
         }
         verses.sort_by_key(|v| v.verse);
-        Ok(Chapter { book: def.osis.to_string(), chapter, verses })
+        Ok(Chapter {
+            book: def.osis.to_string(),
+            chapter,
+            verses,
+        })
     }
 
     fn list_books(&self, module_id: &str) -> Result<Vec<BibleBook>> {
@@ -201,7 +221,11 @@ impl BibleEngine for NativeSwordEngine {
                 let description = conf.description().unwrap_or("").to_string();
                 Some(CoreModule {
                     id: conf.name().to_string(),
-                    name: if description.is_empty() { conf.name().to_string() } else { description.clone() },
+                    name: if description.is_empty() {
+                        conf.name().to_string()
+                    } else {
+                        description.clone()
+                    },
                     module_type,
                     lang: conf.lang().unwrap_or("en").to_string(),
                     description,
@@ -238,7 +262,8 @@ mod tests {
 
     #[test]
     fn missing_sword_dir_is_an_empty_library() {
-        let engine = NativeSwordEngine::new(std::env::temp_dir().join("vera_native_tests/does_not_exist"));
+        let engine =
+            NativeSwordEngine::new(std::env::temp_dir().join("vera_native_tests/does_not_exist"));
         assert!(engine.list_modules().unwrap().is_empty());
         assert!(!engine.has_module("KJV"));
     }
@@ -246,7 +271,13 @@ mod tests {
     #[test]
     fn unknown_module_is_module_not_found() {
         let engine = NativeSwordEngine::new(empty_dir("missing_mod"));
-        assert!(matches!(engine.list_books("NOPE"), Err(BibleError::ModuleNotFound(_))));
-        assert!(matches!(engine.get_chapter("NOPE", "Gen", 1), Err(BibleError::ModuleNotFound(_))));
+        assert!(matches!(
+            engine.list_books("NOPE"),
+            Err(BibleError::ModuleNotFound(_))
+        ));
+        assert!(matches!(
+            engine.get_chapter("NOPE", "Gen", 1),
+            Err(BibleError::ModuleNotFound(_))
+        ));
     }
 }
