@@ -25,7 +25,6 @@
       color: var(--color-text-secondary);
       margin-bottom: 8px;
       gap: 12px;
-      cursor: pointer;
     }
     input[type=range] {
       accent-color: var(--color-text-link);
@@ -33,8 +32,12 @@
     }
     input[type=checkbox] { 
       accent-color: var(--color-text-link);
+      cursor: pointer;
     }
-    select {
+    label.setting-row {
+      cursor: pointer;
+    }
+    .theme-btn {
       background-color: var(--color-bg-input);
       color: var(--color-text-primary);
       border: 1px solid var(--color-border-default);
@@ -43,20 +46,16 @@
       font-size: 12px;
       font-family: var(--font-sans);
       cursor: pointer;
+      transition: all 150ms ease-out;
       
       &:hover {
         border-color: var(--color-border-active);
-      }
-      
-      &:focus {
-        outline: none;
-        border-color: var(--color-border-active);
-        box-shadow: 0 0 3px rgba(123, 163, 216, 0.3);
-      }
-      
-      option {
         background-color: var(--color-bg-surface);
-        color: var(--color-text-primary);
+      }
+      
+      &:focus-visible {
+        outline: 2px solid var(--color-border-active);
+        outline-offset: 1px;
       }
     }
     .about-text {

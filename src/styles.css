@@ -265,12 +265,12 @@
   /* Text Colors */
   --color-text-primary: #2a2824;
   --color-text-secondary: #534f47;
-  --color-text-tertiary: #6e6961;
-  --color-text-muted: #8d8780;
-  --color-text-disabled: #aaa399;
+  --color-text-tertiary: #6a6157;
+  --color-text-muted: #6b6056;
+  --color-text-disabled: #9a8f85;
   
   /* Accent & Special Text */
-  --color-text-accent: #8b7c3f;
+  --color-text-accent: #664a24;
   --color-text-link: #2563a5;
   --color-text-link-hover: #1d4a8a;
   --color-text-link-rgb: 37, 99, 165;
@@ -281,10 +281,10 @@
   --color-border-active: #2563a5;
   
   /* Status & Indicators */
-  --color-status-online: #198754;
+  --color-status-online: #0d6a48;
   --color-status-offline: #6e6961;
-  --color-status-warning: #cc8800;
-  --color-status-error: #dc3545;
+  --color-status-warning: #934c00;
+  --color-status-error: #b91620;
   --color-status-installing: #0056b3;
   
   /* Navigation Rail */
@@ -338,72 +338,72 @@
    VERA SEPIA THEME
    ============================================================================ */
 [data-theme="vera-sepia"] {
-  /* Background Surfaces */
-  --color-bg-app: #1f1813;
-  --color-bg-surface: #2a2318;
-  --color-bg-surface-raised: #332b1f;
-  --color-bg-surface-base: #2a2318;
-  --color-bg-surface-tab: #312a1e;
-  --color-bg-reader: #251f17;
-  --color-bg-commentary: #252018;
-  --color-bg-tab: #312a1e;
-  --color-bg-input: #212016;
-  --color-bg-highlight: #5a4a28;
+  /* Background Surfaces - Light parchment */
+  --color-bg-app: #e9dbc0;
+  --color-bg-surface: #e5d6b9;
+  --color-bg-surface-raised: #e9dbc0;
+  --color-bg-surface-base: #e5d6b9;
+  --color-bg-surface-tab: #ddd0ad;
+  --color-bg-reader: #f4ead7;
+  --color-bg-commentary: #ede4d1;
+  --color-bg-tab: #ddd0ad;
+  --color-bg-input: #f0e8d6;
+  --color-bg-highlight: #ffeb85;
   
-  /* Text Colors */
-  --color-text-primary: #e8dcc8;
-  --color-text-secondary: #d1c3b0;
-  --color-text-tertiary: #bfb1a0;
-  --color-text-muted: #a89986;
-  --color-text-disabled: #94867a;
+  /* Text Colors - Dark brown */
+  --color-text-primary: #3d2f24;
+  --color-text-secondary: #534a3f;
+  --color-text-tertiary: #65574d;
+  --color-text-muted: #6b5944;
+  --color-text-disabled: #9a8d7e;
   
   /* Accent & Special Text */
-  --color-text-accent: #d4b896;
-  --color-text-link: #9b8b6d;
-  --color-text-link-hover: #aca088;
-  --color-text-link-rgb: 155, 139, 109;
+  --color-text-accent: #78552f;
+  --color-text-link: #6b5a4a;
+  --color-text-link-hover: #5a4a39;
+  --color-text-link-rgb: 107, 90, 74;
   
   /* Borders & Dividers */
-  --color-border-subtle: #3a3228;
-  --color-border-default: #453d31;
-  --color-border-active: #9b8b6d;
+  --color-border-subtle: #c8b697;
+  --color-border-default: #bda989;
+  --color-border-active: #78552f;
   
   /* Status & Indicators */
-  --color-status-online: #6b9e6f;
-  --color-status-offline: #bfb1a0;
-  --color-status-warning: #d4a654;
-  --color-status-error: #c84a3a;
-  --color-status-installing: #7a8fb0;
+  --color-status-online: #315f38;
+  --color-status-offline: #807460;
+  --color-status-warning: #805000;
+  --color-status-error: #a43627;
+  --color-status-installing: #385978;
   
   /* Navigation Rail */
-  --nav-bg-color: #2a2318;
-  --nav-bg-hover: rgba(255,255,255,0.05);
-  --nav-bg-active: rgba(255,255,255,0.09);
-  --nav-border-color: #3a3228;
+  --nav-bg-color: #e5d6b9;
+  --nav-bg-hover: rgba(0, 0, 0, 0.04);
+  --nav-bg-active: rgba(0, 0, 0, 0.08);
+  --nav-border-color: #c8b697;
   
   /* Title Bar */
-  --titlebar-bg-color: #2a2318;
-  --titlebar-border-color: #3a3228;
+  --titlebar-bg-color: #e5d6b9;
+  --titlebar-border-color: #c8b697;
   
   /* Status Bar */
-  --statusbar-bg-color: #312a1e;
+  --statusbar-bg-color: #ddd0ad;
   
   /* Panels */
-  --panel-bg-color: #2a2318;
-  --panel-border-color: #3a3228;
-  --panel-hover-bg: rgba(255,255,255,0.03);
+  --panel-bg-color: #e5d6b9;
+  --panel-border-color: #c8b697;
+  --panel-hover-bg: rgba(0, 0, 0, 0.03);
   
   /* Tabs */
-  --tab-bg-color: #312a1e;
-  --tab-border-color: #3a3228;
+  --tab-bg-color: #ddd0ad;
+  --tab-border-color: #c8b697;
   
   /* Buttons */
-  --button-bg-secondary: rgba(255,255,255,0.07);
-  --button-hover-secondary: rgba(255,255,255,0.11);
+  --button-bg-secondary: rgba(0, 0, 0, 0.05);
+  --button-hover-secondary: rgba(0, 0, 0, 0.08);
   
   /* Commentary */
-  --commentary-bg-color: #252018;
-  --commentary-border-color: #3a3228;
+  --commentary-bg-color: #ede4d1;
+  --commentary-border-color: #c8b697;
   
   /* Error & Status States */
   --error-bg-color: rgba(200, 74, 58, 0.1);
@@ -414,12 +414,12 @@
   --success-border-color: rgba(107, 158, 111, 0.3);
   
   /* Scrollbar */
-  --scrollbar-thumb-bg: #3a3228;
-  --scrollbar-thumb-hover: #4a4238;
+  --scrollbar-thumb-bg: #c8b697;
+  --scrollbar-thumb-hover: #b89f88;
   
   /* Hover & Interaction States */
-  --hover-bg: rgba(255,255,255,0.03);
-  --active-bg: rgba(255,255,255,0.06);
+  --hover-bg: rgba(0, 0, 0, 0.03);
+  --active-bg: rgba(0, 0, 0, 0.05);
 }
 
 * {

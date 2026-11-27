@@ -41,10 +41,33 @@ export class ThemeService {
   }
 
   /**
+   * Cycle to the next available theme in order.
+   * Wraps back to the first theme after the last one.
+   */
+  cycleTheme(): void {
+    const current = this.currentTheme();
+    const currentIndex = AVAILABLE_THEMES.indexOf(current);
+    const nextIndex = (currentIndex + 1) % AVAILABLE_THEMES.length;
+    this.setTheme(AVAILABLE_THEMES[nextIndex]);
+  }
+
+  /**
    * Get list of available themes.
    */
   getAvailableThemes(): Theme[] {
     return [...AVAILABLE_THEMES];
+  }
+
+  /**
+   * Get human-readable name for a theme.
+   */
+  getThemeName(theme: Theme): string {
+    const names: Record<Theme, string> = {
+      'vera-dark': 'Vera Dark',
+      'vera-light': 'Vera Light',
+      'vera-sepia': 'Vera Sepia',
+    };
+    return names[theme];
   }
 
   /**

@@ -2,18 +2,13 @@
     <div class="settings-panel">
       <h2 class="panel-title">SETTINGS</h2>
 
-      <!-- Theme -->
+      <!-- Appearance -->
       <section class="settings-section">
-        <h3>Theme</h3>
-        <label class="setting-row">
-          <span>Color scheme</span>
-          <select [value]="themeService.currentTheme()"
-            (change)="onThemeChange($event)">
-            <option value="vera-dark">Vera Dark</option>
-            <option value="vera-light">Vera Light</option>
-            <option value="vera-sepia">Vera Sepia</option>
-          </select>
-        </label>
+        <h3>Appearance</h3>
+        <div class="setting-row">
+          <span>Theme: <strong>{{ getThemeName(themeService.currentTheme()) }}</strong></span>
+          <button type="button" class="theme-btn" (click)="cycleTheme()" title="Change theme">Change theme</button>
+        </div>
       </section>
 
       <!-- Display -->

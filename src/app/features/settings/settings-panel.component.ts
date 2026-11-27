@@ -21,12 +21,11 @@ export class SettingsPanelComponent {
     this.state.displayOptions.update(o => ({ ...o, ...partial }));
   }
 
-  protected onThemeChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    this.changeTheme(target.value);
+  protected cycleTheme(): void {
+    this.themeService.cycleTheme();
   }
 
-  protected changeTheme(theme: string): void {
-    this.themeService.setTheme(theme as any);
+  protected getThemeName(themeId: ReturnType<typeof this.themeService.currentTheme>): string {
+    return this.themeService.getThemeName(themeId);
   }
 }

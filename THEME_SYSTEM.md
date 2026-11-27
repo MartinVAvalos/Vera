@@ -4,6 +4,54 @@
 
 Vera uses a hierarchical CSS custom property system for theming. This allows colors to be managed semantically with support for multiple themes while keeping component styles simple and maintainable.
 
+## Supported Themes
+
+Vera ships with three built-in themes:
+
+| Theme | Description | Use Case |
+|-------|-------------|----------|
+| **Vera Dark** (default) | Dark background with light text | Evening/low-light reading |
+| **Vera Light** | Light background with dark text | Daytime reading |
+| **Vera Sepia** | Warm parchment palette with dark brown text | Printed book aesthetic |
+
+### Theme Selection
+
+Users can switch themes via the **Settings → Appearance** panel using the **Change theme** button, which cycles through themes in this order:
+
+```
+Vera Dark → Vera Light → Vera Sepia → Vera Dark
+```
+
+Clicking the button advances to the next theme. Changes apply immediately without reloading the application.
+
+### Theme Management
+
+Themes are managed by the `ThemeService`:
+- **Service**: `src/app/core/services/theme.service.ts` — Registers available themes, manages cycling, and handles persistence
+- **Styles**: `src/styles.css` — Defines all theme token values via `[data-theme="..."]` rule sets  
+- **UI**: `src/app/features/settings/settings-panel.component.ts/html` — Displays current theme and provides cycling button
+- **Persistence**: Theme preference is saved to localStorage with key `vera-theme`
+- **Bootstrap**: ThemeService is injected during app initialization to apply theme before the first render
+
+The theme is applied to the HTML document root:
+```typescript
+document.documentElement.setAttribute('data-theme', theme);
+```
+
+### Theme Cycling
+
+The `ThemeService.cycleTheme()` method:
+- Derives the next theme from the `AVAILABLE_THEMES` array (single source of truth)
+- Uses modulo arithmetic to wrap back to the first theme
+- Automatically persists the new theme to localStorage
+- Triggers the effect to update `document.documentElement.data-theme`
+
+### Theme Restoration
+
+On app startup, `ThemeService` loads the user's saved preference from localStorage. If the saved value is invalid or missing, it falls back to the default theme (`vera-dark`).
+
+**Legacy migration:** Any saved preference using the old identifier `logos-dark` is automatically migrated to `vera-dark`.
+
 ## Theme Architecture
 
 ### Three-Layer System
@@ -23,30 +71,6 @@ Vera uses a hierarchical CSS custom property system for theming. This allows col
    - Reference semantic tokens via `var()` for automatic theme inheritance
    - Independent from the rest of the UI to allow separate theming of reading experience
    - Examples: `--reader-text-color`, `--reader-verse-number-color`, `--reader-selection-bg`
-
-### Theme Selection
-
-Themes are managed by the `ThemeService` and applied to the HTML document root:
-
-```typescript
-// In src/app/core/services/theme.service.ts
-document.documentElement.setAttribute('data-theme', theme);
-```
-
-**Available themes:**
-- `vera-dark` (default) — Vera's dark theme
-
-**Theme configuration:**
-- **Service**: `src/app/core/services/theme.service.ts` — Registers available themes and manages selection
-- **Styles**: `src/styles.css` — Defines all theme token values via `[data-theme="..."]` rule sets
-- **Persistence**: Theme preference is saved to localStorage with key `vera-theme`
-- **Bootstrap**: ThemeService is injected during app initialization to apply theme before the first render
-
-**To add a theme:** 
-1. Register the new theme identifier in `ThemeService` (`AVAILABLE_THEMES` list)
-2. Create a new `[data-theme="theme-name"]` rule set in `src/styles.css` with overrides for semantic tokens
-3. Region and reader tokens will inherit from semantic tokens via `var()` cascade; override only tokens that differ from defaults
-4. No changes needed to component HTML or TypeScript
 
 ## Token Categories
 
@@ -157,16 +181,19 @@ Use semantic or region-specific tokens directly in component styles:
 ```typescript
 @Component({
   selector: 'app-example',
-  template: `<div class="example">Content</div>`,
-  styles: [`
-    .example {
-      background: var(--panel-bg-color);
-      color: var(--panel-text-color);
-      border: 1px solid var(--panel-border-color);
-    }
-  `],
+  templateUrl: './example.component.html',
+  styleUrl: './example.component.scss',
 })
 export class ExampleComponent {}
+```
+
+In `example.component.scss`:
+```scss
+.example {
+  background: var(--panel-bg-color);
+  color: var(--panel-text-color);
+  border: 1px solid var(--panel-border-color);
+}
 ```
 
 ### Avoid
@@ -199,7 +226,7 @@ export class ExampleComponent {}
    - Region tokens (e.g., `--nav-bg-color`, `--panel-bg-color`) reference semantic tokens using `var(--color-...)`
    - Reader tokens (e.g., `--reader-text-color`, `--reader-bg-color`) reference semantic tokens
    - When a semantic token is overridden in `[data-theme="your-theme"]`, region and reader tokens automatically use the new value
-   - **Only override region/reader tokens if they intentionally differ from their semantic base**
+   - **Note**: Some region tokens use independent values for specific UI needs. Light and Sepia themes require explicit status and muted text overrides to maintain WCAG AA contrast against their panel backgrounds.
 
 **Example inheritance showing semantic tokens → reader tokens:**
 ```css
@@ -229,7 +256,7 @@ export class ExampleComponent {}
 }
 ```
 
-This provides **zero code duplication** — new themes override only semantic tokens, and all region and reader tokens inherit through the `var()` cascade.
+This design minimizes duplication through CSS variable inheritance — new themes typically override only semantic tokens, while region and reader tokens reference them via `var()`. However, some region-specific tokens (such as tab colors, navigation rail backgrounds, and status indicator colors) use independent values to meet contrast and usability requirements. Light and Sepia themes require explicit overrides for status and muted text colors to maintain WCAG AA contrast against their panel backgrounds. Developers implementing a new theme must audit all visual components, not just semantic tokens.
 
 ## Vera Dark Theme
 
@@ -242,6 +269,65 @@ The included `vera-dark` theme provides Vera's signature dark mode:
 - Subtle borders (#2a3140)
 
 This theme creates high contrast for readability while maintaining a cohesive, low-distraction dark mode experience.
+
+## Vera Light Theme
+
+The `vera-light` theme is optimized for daytime reading with WCAG AA contrast compliance:
+- Light off-white app background (#f8f7f5)
+- Bright white panel surfaces (#efefed)
+- Dark brown primary text (#2a2824)
+- Muted text (#6b6056)
+- Accent color (#664a24)
+- Subtle borders (#dddad4)
+- Status colors: Online #0d6a48, Warning #934c00, Error #b91620
+
+**Verified contrast ratios (WCAG AA: 4.5:1 minimum for normal text):**
+- Primary text (#2a2824) vs app bg (#f8f7f5): 13.74:1 ✓
+- Primary text (#2a2824) vs panel bg (#efefed): 12.78:1 ✓
+- Secondary text (#534f47) vs panel bg (#efefed): 7.08:1 ✓
+- Tertiary text (#6a6157) vs tab bg (#e8e6e3): 4.87:1 ✓
+- Muted text (#6b6056) vs panel bg (#efefed): 5.31:1 ✓
+- Status Online (#0d6a48) vs panel bg: 5.75:1 ✓
+- Status Warning (#934c00) vs panel bg: 5.57:1 ✓
+- Status Error (#b91620) vs panel bg: 5.70:1 ✓
+
+## Vera Sepia Theme
+
+The `vera-sepia` theme provides a warm, parchment-inspired aesthetic for extended reading:
+- Warm beige app background (#e9dbc0)
+- Light cream panel backgrounds (#e5d6b9)
+- Light tan reader background (#f4ead7)
+- Dark brown primary text (#3d2f24)
+- Medium brown secondary text (#534a3f)
+- Muted brown text (#6b5944)
+- Warm gold accent (#78552f)
+- Subtle tan borders (#c8b697)
+- Status colors: Online #315f38, Warning #805000, Error #a43627, Installing #385978
+
+**Verified contrast ratios (WCAG AA: 4.5:1 minimum for normal text):**
+- Primary text (#3d2f24) vs app bg (#e9dbc0): 9.42:1 ✓
+- Primary text (#3d2f24) vs panel bg (#e5d6b9): 8.99:1 ✓
+- Secondary text (#534a3f) vs panel bg (#e5d6b9): 6.06:1 ✓
+- Tertiary text (#65574d) vs tab bg (#ddd0ad): 4.53:1 ✓
+- Muted text (#6b5944) vs panel bg (#e5d6b9): 4.67:1 ✓
+- Status Online (#315f38) vs panel bg: 5.19:1 ✓
+- Status Warning (#805000) vs panel bg: 4.78:1 ✓
+- Status Error (#a43627) vs panel bg: 4.67:1 ✓
+
+The warm, earthy palette mimics printed book aesthetics, reducing eye strain during long reading sessions while maintaining WCAG AA contrast for accessibility.
+
+## Implementation Guidelines
+- Navigation rail icons and labels
+- Title bar text
+- Status bar indicators
+- Settings panel controls and labels
+- Input fields and placeholders
+- Tab labels and indicators
+- Button text and backgrounds
+- Commentary panel text
+- Verse numbers and selection backgrounds
+- Error, warning, and success message indicators
+- Keyboard focus outlines
 
 ## Token Naming Conventions
 
@@ -265,5 +351,5 @@ This theme creates high contrast for readability while maintaining a cohesive, l
 - `src/app/core/services/theme.service.ts` — Theme management, persistence, and bootstrap
 - `src/styles.css` — Global theme tokens and `:root` / `[data-theme]` definitions
 - `src/app/app.ts` — Injects ThemeService on app initialization
-- `src/app/app.css` — App shell and layout region styles
+- `src/app/app.scss` — App shell and layout region styles
 - Component styles — Use region/semantic tokens; examples in nav-rail, reader-panel, library-panel
