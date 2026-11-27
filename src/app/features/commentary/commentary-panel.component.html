@@ -1,0 +1,34 @@
+
+    <div class="commentary">
+      <div class="panel-header">
+        <span>Commentary</span>
+        <button class="close-btn" (click)="state.commentaryOpen.set(false)" title="Close">×</button>
+      </div>
+
+      <div class="commentary-selector">
+        <select (change)="onSelectModule($event)">
+          <option value="">Select commentary…</option>
+          @for (mod of commentaries(); track mod.id) {
+            <option [value]="mod.id" [selected]="state.activeCommentaryModule() === mod.id">
+              {{ mod.name }}
+            </option>
+          }
+        </select>
+      </div>
+
+      @if (loadError()) {
+        <div class="commentary-error">
+          <p class="error-title">Error loading commentaries</p>
+          <p class="error-message">{{ loadError() }}</p>
+        </div>
+      } @else if (state.activeCommentaryModule()) {
+        <div class="commentary-content">
+          <p class="muted">Commentary for {{ state.statusLabel() || 'the selected passage' }} will appear here once the module engine is connected.</p>
+        </div>
+      } @else {
+        <div class="commentary-empty">
+          <p>Select a commentary module above</p>
+        </div>
+      }
+    </div>
+  

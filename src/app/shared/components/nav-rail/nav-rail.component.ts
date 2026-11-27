@@ -9,55 +9,8 @@ interface NavItem {
 
 @Component({
   selector: 'app-nav-rail',
-  template: `
-    <nav class="nav-rail">
-      @for (item of navItems; track item.tab) {
-        <button
-          class="nav-btn"
-          [class.active]="state.activeSidebarTab() === item.tab"
-          [title]="item.label"
-          (click)="onNavClick(item.tab)"
-        >
-          {{ item.icon }}
-        </button>
-      }
-    </nav>
-  `,
-  styles: [`
-    .nav-rail {
-      width: 44px;
-      background: var(--nav-bg-color);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 8px;
-      flex-shrink: 0;
-      border-right: 1px solid var(--nav-border-color);
-    }
-    .nav-btn {
-      width: 36px;
-      height: 36px;
-      border: none;
-      background: transparent;
-      color: var(--nav-text-color);
-      cursor: pointer;
-      border-radius: 6px;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 4px;
-      transition: background 0.15s, color 0.15s;
-    }
-    .nav-btn:hover {
-      background: var(--nav-bg-hover);
-      color: var(--nav-text-hover);
-    }
-    .nav-btn.active {
-      background: var(--nav-bg-active);
-      color: var(--nav-text-hover);
-    }
-  `],
+  templateUrl: './nav-rail.component.html',
+  styleUrl: './nav-rail.component.scss',
 })
 export class NavRailComponent {
   protected readonly state = inject(AppState);

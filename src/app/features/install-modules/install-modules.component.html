@@ -1,0 +1,136 @@
+
+    <div class="install-modules">
+      <h2>Module Manager</h2>
+
+      <div class="available-section">
+        <h3>Quick Install</h3>
+        <p class="description">Popular SWORD modules ready to download:</p>
+        <div class="module-list">
+          @for (mod of KNOWN_MODULES; track mod.id) {
+            <div class="module-card">
+              <div class="module-info">
+                <div class="module-name">{{ mod.name }}</div>
+                <div class="module-id">{{ mod.id }}</div>
+              </div>
+              <button
+                class="install-btn"
+                (click)="installModule(mod.id, mod.url)"
+                [disabled]="installing() || isInstalled(mod.id)"
+              >
+                {{ isInstalled(mod.id) ? 'Installed' : 'Install' }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="custom-section">
+        <h3>Custom Module</h3>
+        <div class="custom-install">
+          <label for="custom-module-id">Module ID</label>
+          <input
+            id="custom-module-id"
+            name="customModuleId"
+            type="text"
+            placeholder="e.g., KJV"
+            [(ngModel)]="customModuleId"
+            [disabled]="installing()"
+          />
+          <label for="custom-module-url">Archive URL (.zip)</label>
+          <input
+            id="custom-module-url"
+            name="customModuleUrl"
+            type="text"
+            placeholder="https://example.com/module.zip"
+            [(ngModel)]="customModuleUrl"
+            (ngModelChange)="onUrlInput()"
+            [disabled]="installing()"
+          />
+          @if (urlValidationError()) {
+            <div class="validation-error" role="alert">{{ urlValidationError() }}</div>
+          }
+          <button
+            type="button"
+            class="install-btn custom-install-btn"
+            (click)="installModule(customModuleId, customModuleUrl)"
+            [disabled]="installing() || !customModuleId || !customModuleUrl || !!urlValidationError()"
+          >
+            Install
+          </button>
+        </div>
+      </div>
+
+      @if (installing()) {
+        <div class="status-message installing">
+          <div class="spinner"></div>
+          {{ currentTask().message || 'Installing...' }}
+        </div>
+      }
+
+      @if (currentTask().status === 'done') {
+        <div class="status-message success">
+          ✓ {{ currentTask().message }}
+        </div>
+      }
+
+      @if (currentTask().status === 'error') {
+        <div class="status-message error">
+          ✗ {{ currentTask().message }}
+        </div>
+      }
+
+      <div class="installed-section">
+        <h3>Installed Modules</h3>
+        <p class="description">Bible, commentary, lexicon, and other module types:</p>
+        
+        @if (listError()) {
+          <div class="status-message error" role="alert">
+            <strong>Failed to load modules:</strong>
+            <div>{{ listError() }}</div>
+            <button (click)="retryLoadModules()" [disabled]="installing()">Retry</button>
+          </div>
+        }
+        
+        @if (installedModules().length) {
+          <div class="module-list">
+            @for (mod of installedModules(); track mod.id) {
+              <div class="module-card">
+                <div class="module-info">
+                  <div class="module-name">{{ mod.name }}</div>
+                  <div class="module-id">{{ mod.id }}<span class="module-type"> [{{ mod.module_type }}]</span></div>
+                </div>
+                <button
+                  class="remove-btn"
+                  (click)="requestUninstall(mod.id)"
+                  [disabled]="installing()"
+                  title="Remove module"
+                >
+                  Remove
+                </button>
+              </div>
+            }
+          </div>
+        } @else if (!listError()) {
+          <p class="muted">No modules installed yet.</p>
+        }
+      </div>
+    </div>
+
+    @if (pendingRemovalId()) {
+      <div class="confirm-backdrop" (keydown.escape)="cancelUninstall()">
+        <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title"
+             cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+          <h4 id="confirm-dialog-title" class="confirm-title">Remove {{ pendingRemovalName() }}?</h4>
+          <p class="confirm-body">Open passages from this module will be closed.</p>
+          <div class="confirm-actions">
+            <button type="button" class="confirm-cancel-btn" cdkFocusInitial (click)="cancelUninstall()">
+              Cancel
+            </button>
+            <button type="button" class="confirm-remove-btn" (click)="confirmUninstall()" [disabled]="installing()">
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  

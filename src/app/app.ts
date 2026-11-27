@@ -17,7 +17,7 @@ import { SettingsPanelComponent } from './features/settings/settings-panel.compo
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
-  styleUrl: './app.css',
+  styleUrl: './app.scss',
   imports: [
     AngularSplitModule,
     NavRailComponent,

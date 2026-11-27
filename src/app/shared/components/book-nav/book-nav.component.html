@@ -1,0 +1,34 @@
+
+    <nav class="book-nav">
+      <button class="nav-btn" [disabled]="!state.canGoBack()"    (click)="goBack()"    title="Back">‹</button>
+      <button class="nav-btn" [disabled]="!state.canGoForward()" (click)="goForward()" title="Forward">›</button>
+      <div class="divider"></div>
+
+      <select class="nav-select book-select" [ngModel]="selectedBook()" (ngModelChange)="onBookChange($event)">
+        @for (b of books(); track b.id) {
+          <option [ngValue]="b.id">{{ b.name }}</option>
+        }
+      </select>
+
+      <select class="nav-select ch-select" [ngModel]="selectedChapter()" (ngModelChange)="onChapterChange($event)">
+        @for (n of chapterNums(); track n) {
+          <option [ngValue]="n">{{ n }}</option>
+        }
+      </select>
+
+      <select class="nav-select v-select" [ngModel]="selectedVerse()" (ngModelChange)="onVerseChange($event)">
+        @for (n of verseNums(); track n) {
+          <option [ngValue]="n">{{ n }}</option>
+        }
+      </select>
+
+      <div class="divider"></div>
+      <button class="nav-btn" [disabled]="selectedChapter() <= 1"
+        (click)="prevChapter()" title="Previous chapter">«</button>
+      <button class="nav-btn" [disabled]="selectedChapter() >= (currentBook()?.chapters ?? 1)"
+        (click)="nextChapter()" title="Next chapter">»</button>
+      @if (loadError()) {
+        <span class="nav-error" role="alert">Could not load books: {{ loadError() }}</span>
+      }
+    </nav>
+  

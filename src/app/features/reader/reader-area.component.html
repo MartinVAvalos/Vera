@@ -1,0 +1,37 @@
+
+    <div class="reader-area">
+      @if (state.openPanels().length) {
+        <div class="tab-bar">
+          @for (panel of state.openPanels(); track panel.id) {
+            <button
+              class="tab"
+              [class.active]="state.activePanelId() === panel.id"
+              (click)="state.activePanelId.set(panel.id)"
+            >
+              {{ panel.moduleName }}
+              <span class="tab-close"
+                (click)="$event.stopPropagation(); state.closePanel(panel.id)">×</span>
+            </button>
+          }
+        </div>
+
+        @if (state.activePanel()) {
+          <app-book-nav />
+        }
+
+        <as-split direction="horizontal" class="split-host" [gutterSize]="4">
+          <as-split-area [size]="100">
+            @if (state.activePanel(); as panel) {
+              <app-reader-panel [panel]="panel" />
+            }
+          </as-split-area>
+        </as-split>
+
+      } @else {
+        <div class="empty-state">
+          <div class="empty-icon">✝</div>
+          <p>Open a module from the Library to begin reading</p>
+        </div>
+      }
+    </div>
+  

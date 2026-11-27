@@ -1,0 +1,35 @@
+<div class="reader-panel">
+  @if (loading()) {
+    <div class="loading">Loading…</div>
+  } @else if (panel().chapter) {
+    <div class="chapter-header">
+      <span class="chapter-title">
+        {{ panel().chapter!.verses[0]?.translation || panel().moduleName }}
+        &mdash;
+        {{ panel().ref.book }}&nbsp;{{ panel().ref.chapter }}
+      </span>
+    </div>
+
+    <div class="verses" [style.font-size.px]="baseFontSize()">
+      @for (verse of panel().chapter!.verses; track verse.verse) {
+        <span
+          class="verse"
+          [class.selected]="selectedVerse() === verse.verse"
+          (click)="selectVerse(verse.verse)"
+        >
+          @if (state.filterOptions().verse_numbers) {
+            <sup class="verse-num">{{ verse.verse }}</sup>
+          }
+          {{ verse.text }}
+        </span>
+      }
+    </div>
+  } @else if (error()) {
+    <div class="error" role="alert">
+      <p>{{ error() }}</p>
+      <p class="hint">Install a Bible module from the Library to start reading.</p>
+    </div>
+  } @else {
+    <div class="empty">Select a passage from the navigation bar above</div>
+  }
+</div>

@@ -6,74 +6,8 @@ import { BibleService } from '../../core/services';
 
 @Component({
   selector: 'app-reader-panel',
-  template: `
-    <div class="reader-panel">
-      @if (loading()) {
-        <div class="loading">Loading…</div>
-      } @else if (panel().chapter) {
-        <div class="chapter-header">
-          <span class="chapter-title">
-            {{ panel().chapter!.verses[0]?.translation || panel().moduleName }}
-            &mdash;
-            {{ panel().ref.book }}&nbsp;{{ panel().ref.chapter }}
-          </span>
-        </div>
-
-        <div class="verses" [style.font-size.px]="baseFontSize()">
-          @for (verse of panel().chapter!.verses; track verse.verse) {
-            <span
-              class="verse"
-              [class.selected]="selectedVerse() === verse.verse"
-              (click)="selectVerse(verse.verse)"
-            >
-              @if (state.filterOptions().verse_numbers) {
-                <sup class="verse-num">{{ verse.verse }}</sup>
-              }
-              {{ verse.text }}
-            </span>
-          }
-        </div>
-      } @else if (error()) {
-        <div class="error" role="alert">
-          <p>{{ error() }}</p>
-          <p class="hint">Install a Bible module from the Library to start reading.</p>
-        </div>
-      } @else {
-        <div class="empty">Select a passage from the navigation bar above</div>
-      }
-    </div>
-  `,
-  styles: [`
-    .reader-panel {
-      flex: 1; overflow-y: auto; padding: 24px 36px;
-      background: var(--reader-bg-color);
-    }
-    .loading, .empty, .error {
-      color: var(--reader-verse-number-color); padding: 48px 24px; text-align: center;
-    }
-    .error p { margin: 0 0 8px; }
-    .hint { font-size: 12px; opacity: 0.7; }
-    .chapter-header {
-      margin-bottom: 20px; padding-bottom: 12px;
-      border-bottom: 1px solid var(--color-border-subtle);
-    }
-    .chapter-title {
-      font-family: var(--font-serif); font-size: 18px;
-      color: var(--reader-heading-color); font-weight: 600;
-    }
-    .verses {
-      line-height: 1.9; font-family: var(--font-serif);
-      color: var(--reader-text-color);
-    }
-    .verse {
-      cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background 0.1s;
-    }
-    .verse:hover { background: var(--hover-bg); }
-    .verse.selected { background: var(--reader-selection-bg); color: var(--reader-selection-text); }
-    .verse-num {
-      color: var(--reader-verse-number-color); font-size: 10px; margin-right: 4px; vertical-align: super;
-    }
-  `],
+  templateUrl: './reader-panel.component.html',
+  styleUrl: './reader-panel.component.scss',
 })
 export class ReaderPanelComponent {
   /** Signal input — tracked reactively; replaces @Input + OnChanges. */

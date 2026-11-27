@@ -1,0 +1,37 @@
+
+    <div class="library">
+      <h2 class="panel-title">LIBRARY</h2>
+
+      @if (loading()) {
+        <p class="muted-text">Loading modules…</p>
+      } @else if (loadError()) {
+        <p class="muted-text" role="alert">Could not load modules: {{ loadError() }}</p>
+      } @else {
+        @for (group of groups(); track group.type) {
+          <div class="group">
+            <button class="group-header" (click)="group.expanded = !group.expanded">
+              <span class="chevron">{{ group.expanded ? '⌄' : '›' }}</span>
+              {{ group.label }}
+            </button>
+            @if (group.expanded) {
+              @for (mod of group.modules; track mod.id) {
+                <button
+                  class="module-item"
+                  [class.active]="isActive(mod)"
+                  [class.disabled]="!canOpen(mod)"
+                  [title]="canOpen(mod) ? '' : 'Module type not yet supported in reader'"
+                  (click)="openModule(mod)"
+                  [disabled]="!canOpen(mod)"
+                >
+                  {{ mod.name }}
+                </button>
+              }
+              @if (!group.modules.length) {
+                <span class="muted-text module-item">No modules installed</span>
+              }
+            }
+          </div>
+        }
+      }
+    </div>
+  

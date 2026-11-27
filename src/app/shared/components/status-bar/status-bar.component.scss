@@ -1,0 +1,32 @@
+.status-bar {
+  height: 24px;
+  background: var(--statusbar-bg-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--statusbar-text-secondary);
+}
+
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+
+  &.available {
+    background: var(--color-status-online);
+  }
+}
+
+.status-right {
+  color: var(--statusbar-text-secondary);
+}

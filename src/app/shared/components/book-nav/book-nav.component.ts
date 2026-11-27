@@ -7,67 +7,8 @@ import { BibleBook, BibleRef } from '../../../core/models';
 @Component({
   selector: 'app-book-nav',
   imports: [FormsModule],
-  template: `
-    <nav class="book-nav">
-      <button class="nav-btn" [disabled]="!state.canGoBack()"    (click)="goBack()"    title="Back">‹</button>
-      <button class="nav-btn" [disabled]="!state.canGoForward()" (click)="goForward()" title="Forward">›</button>
-      <div class="divider"></div>
-
-      <select class="nav-select book-select" [ngModel]="selectedBook()" (ngModelChange)="onBookChange($event)">
-        @for (b of books(); track b.id) {
-          <option [ngValue]="b.id">{{ b.name }}</option>
-        }
-      </select>
-
-      <select class="nav-select ch-select" [ngModel]="selectedChapter()" (ngModelChange)="onChapterChange($event)">
-        @for (n of chapterNums(); track n) {
-          <option [ngValue]="n">{{ n }}</option>
-        }
-      </select>
-
-      <select class="nav-select v-select" [ngModel]="selectedVerse()" (ngModelChange)="onVerseChange($event)">
-        @for (n of verseNums(); track n) {
-          <option [ngValue]="n">{{ n }}</option>
-        }
-      </select>
-
-      <div class="divider"></div>
-      <button class="nav-btn" [disabled]="selectedChapter() <= 1"
-        (click)="prevChapter()" title="Previous chapter">«</button>
-      <button class="nav-btn" [disabled]="selectedChapter() >= (currentBook()?.chapters ?? 1)"
-        (click)="nextChapter()" title="Next chapter">»</button>
-      @if (loadError()) {
-        <span class="nav-error" role="alert">Could not load books: {{ loadError() }}</span>
-      }
-    </nav>
-  `,
-  styles: [`
-    .book-nav {
-      display: flex; align-items: center; gap: 4px;
-      padding: 4px 8px;
-      background: var(--color-surface-tab);
-      border-bottom: 1px solid var(--color-border-subtle);
-      flex-shrink: 0;
-    }
-    .nav-btn {
-      background: none; border: 1px solid transparent;
-      color: var(--color-text-muted); cursor: pointer;
-      padding: 3px 7px; border-radius: 4px; font-size: 14px; line-height: 1;
-      transition: color 0.12s, border-color 0.12s;
-    }
-    .nav-btn:hover:not(:disabled) { color: var(--color-text-primary); border-color: var(--color-border-subtle); }
-    .nav-btn:disabled { opacity: 0.35; cursor: default; }
-    .nav-select {
-      background: var(--color-surface-base); border: 1px solid var(--color-border-subtle);
-      color: var(--color-text-primary); border-radius: 4px;
-      padding: 3px 6px; font-size: 12px; cursor: pointer; outline: none;
-    }
-    .nav-select:focus { border-color: var(--color-text-link); }
-    .book-select { max-width: 160px; }
-    .ch-select, .v-select { width: 54px; }
-    .divider { width: 1px; height: 18px; background: var(--color-border-subtle); margin: 0 2px; }
-    .nav-error { color: var(--color-text-muted); font-size: 12px; margin-left: 8px; }
-  `],
+  templateUrl: './book-nav.component.html',
+  styleUrl: './book-nav.component.scss',
 })
 export class BookNavComponent {
   protected readonly state    = inject(AppState);

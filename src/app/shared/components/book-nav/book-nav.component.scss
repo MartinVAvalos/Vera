@@ -1,0 +1,27 @@
+
+    .book-nav {
+      display: flex; align-items: center; gap: 4px;
+      padding: 4px 8px;
+      background: var(--color-surface-tab);
+      border-bottom: 1px solid var(--color-border-subtle);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      background: none; border: 1px solid transparent;
+      color: var(--color-text-muted); cursor: pointer;
+      padding: 3px 7px; border-radius: 4px; font-size: 14px; line-height: 1;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .nav-btn:hover:not(:disabled) { color: var(--color-text-primary); border-color: var(--color-border-subtle); }
+    .nav-btn:disabled { opacity: 0.35; cursor: default; }
+    .nav-select {
+      background: var(--color-surface-base); border: 1px solid var(--color-border-subtle);
+      color: var(--color-text-primary); border-radius: 4px;
+      padding: 3px 6px; font-size: 12px; cursor: pointer; outline: none;
+    }
+    .nav-select:focus { border-color: var(--color-text-link); }
+    .book-select { max-width: 160px; }
+    .ch-select, .v-select { width: 54px; }
+    .divider { width: 1px; height: 18px; background: var(--color-border-subtle); margin: 0 2px; }
+    .nav-error { color: var(--color-text-muted); font-size: 12px; margin-left: 8px; }
+  

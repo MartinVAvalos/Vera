@@ -1,0 +1,60 @@
+
+    <div class="notes-panel">
+      <h2 class="panel-title">NOTES</h2>
+
+      @if (editingNote(); as note) {
+        <div class="note-editor">
+          <div class="editor-header">
+            <span class="note-ref">{{ formatRef(note.reference) }}</span>
+            <div class="editor-actions">
+              <button type="button" (click)="saveNote()" [disabled]="saving()">
+                {{ saving() ? 'Saving…' : 'Save' }}
+              </button>
+              <button type="button" (click)="cancelEdit()" [disabled]="saving()">Cancel</button>
+            </div>
+          </div>
+          <textarea
+            [(ngModel)]="noteBody"
+            placeholder="Write your note…"
+            rows="8"
+            [disabled]="saving()"
+          ></textarea>
+          @if (saveError()) {
+            <div class="error-msg" role="alert">
+              {{ saveError() }}
+              <button type="button" (click)="saveNote()" [disabled]="saving()">Retry</button>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="new-note-bar">
+        <button type="button" (click)="newNote()" [disabled]="saving()">+ New note</button>
+      </div>
+
+      @if (loading()) {
+        <p class="muted-text">Loading…</p>
+      } @else {
+        @if (loadError()) {
+          <div class="error-msg load-error" role="alert">
+            {{ loadError() }}
+            <button type="button" (click)="retryLoad()">Retry</button>
+          </div>
+        }
+        @if (notes().length) {
+          <ul class="notes-list">
+            @for (n of notes(); track n.id) {
+              <li class="note-item">
+                <button type="button" class="note-btn" (click)="editExisting(n)" [disabled]="saving()">
+                  <span class="note-ref">{{ formatRef(n.reference) }}</span>
+                  <span class="note-preview">{{ n.body.substring(0, 80) }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        } @else if (!loadError()) {
+          <p class="muted-text">No notes yet</p>
+        }
+      }
+    </div>
+  

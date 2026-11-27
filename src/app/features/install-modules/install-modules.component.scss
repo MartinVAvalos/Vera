@@ -1,0 +1,274 @@
+
+    .install-modules {
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--color-surface-base);
+      border-radius: 8px;
+    }
+
+    h2 {
+      color: var(--color-text-primary);
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 18px;
+    }
+
+    h3 {
+      color: var(--color-text-primary);
+      font-size: 14px;
+      margin: 16px 0 8px;
+    }
+
+    .description {
+      color: var(--color-text-muted);
+      font-size: 12px;
+      margin: 0 0 12px;
+    }
+
+    .module-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .module-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--color-surface-tab);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 4px;
+    }
+
+    .module-info {
+      flex: 1;
+    }
+
+    .module-name {
+      color: var(--color-text-primary);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .module-id {
+      color: var(--color-text-muted);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .module-type {
+      color: var(--color-text-muted);
+      font-size: 10px;
+      font-style: italic;
+    }
+
+    .install-btn, .remove-btn {
+      background: var(--color-surface-base);
+      border: 1px solid var(--color-border-subtle);
+      color: var(--color-text-link);
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .install-btn:hover:not(:disabled) {
+      border-color: var(--color-text-link);
+      background: rgba(var(--color-text-link-rgb), 0.1);
+    }
+
+    .remove-btn {
+      color: var(--color-text-muted);
+    }
+
+    .remove-btn:hover:not(:disabled) {
+      color: var(--error-text-color);
+      border-color: var(--error-text-color);
+    }
+
+    .install-btn:disabled, .remove-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .custom-section {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-border-subtle);
+    }
+
+    .custom-install {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    input {
+      background: var(--color-surface-tab);
+      border: 1px solid var(--color-border-subtle);
+      color: var(--color-text-primary);
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--color-text-link);
+    }
+
+    input:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status-message {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-message.installing {
+      background: var(--installing-bg-color);
+      color: var(--installing-text-color);
+      border: 1px solid var(--installing-border-color);
+    }
+
+    .status-message.success {
+      background: var(--success-bg-color);
+      color: var(--success-text-color);
+      border: 1px solid var(--success-border-color);
+    }
+
+    .status-message.error {
+      background: var(--error-bg-color);
+      color: var(--error-text-color);
+      border: 1px solid var(--error-border-color);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .installed-section {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-border-subtle);
+    }
+
+    .muted {
+      color: var(--color-text-muted);
+      font-size: 12px;
+      margin: 0;
+    }
+
+    label {
+      color: var(--color-text-muted);
+      font-size: 11px;
+      font-weight: 500;
+      margin-bottom: 2px;
+      display: block;
+    }
+
+    .validation-error {
+      color: var(--error-text-color);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .custom-install-btn {
+      margin-top: 4px;
+    }
+
+    .confirm-backdrop {
+      position: fixed;
+      inset: 0;
+      background: var(--modal-backdrop-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .confirm-dialog {
+      background: var(--color-surface-base);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 8px;
+      padding: 20px 24px;
+      min-width: 260px;
+      max-width: 320px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .confirm-title {
+      color: var(--color-text-primary);
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 8px;
+    }
+
+    .confirm-body {
+      color: var(--color-text-muted);
+      font-size: 12px;
+      margin: 0 0 16px;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .confirm-cancel-btn,
+    .confirm-remove-btn {
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      border: 1px solid var(--color-border-subtle);
+      transition: all 0.2s;
+    }
+
+    .confirm-cancel-btn {
+      background: var(--color-surface-tab);
+      color: var(--color-text-primary);
+    }
+
+    .confirm-cancel-btn:hover {
+      border-color: var(--color-text-link);
+    }
+
+    .confirm-remove-btn {
+      background: var(--button-bg-error);
+      color: var(--button-text-error);
+      border-color: var(--button-bg-error);
+    }
+
+    .confirm-remove-btn:hover:not(:disabled) {
+      background: var(--button-bg-error-hover);
+      border-color: var(--button-bg-error-hover);
+    }
+
+    .confirm-remove-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  

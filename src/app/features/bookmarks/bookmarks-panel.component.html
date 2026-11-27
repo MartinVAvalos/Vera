@@ -1,0 +1,62 @@
+<div class="bookmarks">
+  <h2 class="panel-title">BOOKMARKS</h2>
+
+  <div class="add-row">
+    <input
+      class="label-input"
+      [(ngModel)]="newLabel"
+      [placeholder]="state.statusRef() ? formatRef(state.statusRef()!) : 'Navigate to a verse first'"
+      [disabled]="saving() || !state.statusRef() && !pendingSave"
+      (keydown.enter)="addBookmark()"
+    />
+    <button class="add-btn" type="button" (click)="addBookmark()"
+            [disabled]="saving() || (!state.statusRef() && !pendingSave)" title="Save bookmark">
+      {{ saving() ? '…' : '+' }}
+    </button>
+  </div>
+  @if (saveError()) {
+    <div class="error-msg" role="alert">
+      {{ saveError() }}
+      <button type="button" (click)="addBookmark()" [disabled]="saving()">Retry</button>
+      <button type="button" (click)="cancelPendingSave()">Dismiss</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else {
+    @if (loadError()) {
+      <div class="error-msg" role="alert">
+        {{ loadError() }}
+        <button type="button" (click)="retryLoad()">Retry</button>
+      </div>
+    }
+    @if (bookmarks().length) {
+      <ul class="list">
+        @for (bm of bookmarks(); track bm.id) {
+          <li class="item">
+            <button class="item-btn" type="button" (click)="jump(bm)">
+              <span class="ref">{{ formatRef(bm.reference) }}</span>
+              <span class="label">{{ bm.label }}</span>
+            </button>
+            <button
+              class="del-btn"
+              type="button"
+              (click)="remove(bm.id)"
+              [disabled]="deletingIds().has(bm.id)"
+              title="Delete"
+            >{{ deletingIds().has(bm.id) ? '…' : '×' }}</button>
+          </li>
+          @if (deleteErrors().get(bm.id); as err) {
+            <li class="delete-error-row" role="alert">
+              {{ err }}
+              <button type="button" (click)="retryDelete(bm.id)" [disabled]="deletingIds().has(bm.id)">Retry</button>
+            </li>
+          }
+        }
+      </ul>
+    } @else if (!loadError()) {
+      <p class="muted">No bookmarks yet.<br>Navigate to a verse, then save it above.</p>
+    }
+  }
+</div>

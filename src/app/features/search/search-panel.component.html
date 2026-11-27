@@ -1,0 +1,37 @@
+
+    <div class="search-panel">
+      <h2 class="panel-title">SEARCH</h2>
+
+      <div class="search-box">
+        <input
+          type="search"
+          placeholder="Search scriptures…"
+          [(ngModel)]="query"
+          (keydown.enter)="doSearch()"
+        />
+        <button (click)="doSearch()" [disabled]="searching()">Go</button>
+      </div>
+
+      @if (searching()) {
+        <p class="muted-text">Searching…</p>
+      }
+
+      @if (searchError()) {
+        <p class="error-text">{{ searchError() }}</p>
+      } @else if (results().length) {
+        <ul class="results">
+          @for (r of results(); track r.snippet) {
+            <li class="result-item" (click)="jump(r)">
+              <div class="result-meta">
+                <span class="ref">{{ formatRef(r.reference) }}</span>
+                <span class="module-tag">{{ r.module_id }}</span>
+              </div>
+              <span class="snippet">{{ r.snippet }}</span>
+            </li>
+          }
+        </ul>
+      } @else if (!searching() && searched()) {
+        <p class="muted-text">No results found</p>
+      }
+    </div>
+  

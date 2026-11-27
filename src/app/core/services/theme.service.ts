@@ -1,8 +1,8 @@
 import { Injectable, effect, signal } from '@angular/core';
 
-export type Theme = 'vera-dark';
+export type Theme = 'vera-dark' | 'vera-light' | 'vera-sepia';
 
-const AVAILABLE_THEMES: Theme[] = ['vera-dark'];
+const AVAILABLE_THEMES: Theme[] = ['vera-dark', 'vera-light', 'vera-sepia'];
 const THEME_STORAGE_KEY = 'vera-theme';
 const DEFAULT_THEME: Theme = 'vera-dark';
 const LEGACY_LOGOS_DARK = 'logos-dark'; // For backward compatibility migration

@@ -1,0 +1,11 @@
+<footer class="status-bar">
+  <div class="status-left">
+    <span class="status-dot" [class.available]="state.engineAvailable()"></span>
+    <span class="status-text">{{ state.engineAvailable() ? 'Engine Ready' : 'Engine Unavailable' }}</span>
+  </div>
+  @if (state.statusLabel()) {
+    <div class="status-right">
+      {{ state.statusLabel() }}
+    </div>
+  }
+</footer>

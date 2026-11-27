@@ -246,6 +246,182 @@
   --active-bg: rgba(255,255,255,0.06);
 }
 
+/* ============================================================================
+   VERA LIGHT THEME
+   ============================================================================ */
+[data-theme="vera-light"] {
+  /* Background Surfaces */
+  --color-bg-app: #f8f7f5;
+  --color-bg-surface: #efefed;
+  --color-bg-surface-raised: #e5e3e0;
+  --color-bg-surface-base: #efefed;
+  --color-bg-surface-tab: #e8e6e3;
+  --color-bg-reader: #faf9f7;
+  --color-bg-commentary: #f7f6f3;
+  --color-bg-tab: #e8e6e3;
+  --color-bg-input: #f2f1ee;
+  --color-bg-highlight: #ffe6a0;
+  
+  /* Text Colors */
+  --color-text-primary: #2a2824;
+  --color-text-secondary: #534f47;
+  --color-text-tertiary: #6e6961;
+  --color-text-muted: #8d8780;
+  --color-text-disabled: #aaa399;
+  
+  /* Accent & Special Text */
+  --color-text-accent: #8b7c3f;
+  --color-text-link: #2563a5;
+  --color-text-link-hover: #1d4a8a;
+  --color-text-link-rgb: 37, 99, 165;
+  
+  /* Borders & Dividers */
+  --color-border-subtle: #d9d6d0;
+  --color-border-default: #ccc8c0;
+  --color-border-active: #2563a5;
+  
+  /* Status & Indicators */
+  --color-status-online: #198754;
+  --color-status-offline: #6e6961;
+  --color-status-warning: #cc8800;
+  --color-status-error: #dc3545;
+  --color-status-installing: #0056b3;
+  
+  /* Navigation Rail */
+  --nav-bg-color: #efefed;
+  --nav-bg-hover: rgba(0,0,0,0.04);
+  --nav-bg-active: rgba(0,0,0,0.08);
+  --nav-border-color: #d9d6d0;
+  
+  /* Title Bar */
+  --titlebar-bg-color: #efefed;
+  --titlebar-border-color: #d9d6d0;
+  
+  /* Status Bar */
+  --statusbar-bg-color: #e8e6e3;
+  
+  /* Panels */
+  --panel-bg-color: #efefed;
+  --panel-border-color: #d9d6d0;
+  --panel-hover-bg: rgba(0,0,0,0.03);
+  
+  /* Tabs */
+  --tab-bg-color: #e8e6e3;
+  --tab-border-color: #d9d6d0;
+  
+  /* Buttons */
+  --button-bg-secondary: rgba(0,0,0,0.05);
+  --button-hover-secondary: rgba(0,0,0,0.08);
+  
+  /* Commentary */
+  --commentary-bg-color: #f7f6f3;
+  --commentary-border-color: #d9d6d0;
+  
+  /* Error & Status States */
+  --error-bg-color: rgba(220, 53, 69, 0.1);
+  --error-border-color: rgba(220, 53, 69, 0.3);
+  --warning-bg-color: rgba(204, 136, 0, 0.1);
+  --warning-border-color: rgba(204, 136, 0, 0.3);
+  --success-bg-color: rgba(25, 135, 84, 0.1);
+  --success-border-color: rgba(25, 135, 84, 0.3);
+  
+  /* Scrollbar */
+  --scrollbar-thumb-bg: #d9d6d0;
+  --scrollbar-thumb-hover: #c5bfb7;
+  
+  /* Hover & Interaction States */
+  --hover-bg: rgba(0,0,0,0.03);
+  --active-bg: rgba(0,0,0,0.05);
+}
+
+/* ============================================================================
+   VERA SEPIA THEME
+   ============================================================================ */
+[data-theme="vera-sepia"] {
+  /* Background Surfaces */
+  --color-bg-app: #1f1813;
+  --color-bg-surface: #2a2318;
+  --color-bg-surface-raised: #332b1f;
+  --color-bg-surface-base: #2a2318;
+  --color-bg-surface-tab: #312a1e;
+  --color-bg-reader: #251f17;
+  --color-bg-commentary: #252018;
+  --color-bg-tab: #312a1e;
+  --color-bg-input: #212016;
+  --color-bg-highlight: #5a4a28;
+  
+  /* Text Colors */
+  --color-text-primary: #e8dcc8;
+  --color-text-secondary: #d1c3b0;
+  --color-text-tertiary: #bfb1a0;
+  --color-text-muted: #a89986;
+  --color-text-disabled: #94867a;
+  
+  /* Accent & Special Text */
+  --color-text-accent: #d4b896;
+  --color-text-link: #9b8b6d;
+  --color-text-link-hover: #aca088;
+  --color-text-link-rgb: 155, 139, 109;
+  
+  /* Borders & Dividers */
+  --color-border-subtle: #3a3228;
+  --color-border-default: #453d31;
+  --color-border-active: #9b8b6d;
+  
+  /* Status & Indicators */
+  --color-status-online: #6b9e6f;
+  --color-status-offline: #bfb1a0;
+  --color-status-warning: #d4a654;
+  --color-status-error: #c84a3a;
+  --color-status-installing: #7a8fb0;
+  
+  /* Navigation Rail */
+  --nav-bg-color: #2a2318;
+  --nav-bg-hover: rgba(255,255,255,0.05);
+  --nav-bg-active: rgba(255,255,255,0.09);
+  --nav-border-color: #3a3228;
+  
+  /* Title Bar */
+  --titlebar-bg-color: #2a2318;
+  --titlebar-border-color: #3a3228;
+  
+  /* Status Bar */
+  --statusbar-bg-color: #312a1e;
+  
+  /* Panels */
+  --panel-bg-color: #2a2318;
+  --panel-border-color: #3a3228;
+  --panel-hover-bg: rgba(255,255,255,0.03);
+  
+  /* Tabs */
+  --tab-bg-color: #312a1e;
+  --tab-border-color: #3a3228;
+  
+  /* Buttons */
+  --button-bg-secondary: rgba(255,255,255,0.07);
+  --button-hover-secondary: rgba(255,255,255,0.11);
+  
+  /* Commentary */
+  --commentary-bg-color: #252018;
+  --commentary-border-color: #3a3228;
+  
+  /* Error & Status States */
+  --error-bg-color: rgba(200, 74, 58, 0.1);
+  --error-border-color: rgba(200, 74, 58, 0.3);
+  --warning-bg-color: rgba(212, 166, 84, 0.1);
+  --warning-border-color: rgba(212, 166, 84, 0.3);
+  --success-bg-color: rgba(107, 158, 111, 0.1);
+  --success-border-color: rgba(107, 158, 111, 0.3);
+  
+  /* Scrollbar */
+  --scrollbar-thumb-bg: #3a3228;
+  --scrollbar-thumb-hover: #4a4238;
+  
+  /* Hover & Interaction States */
+  --hover-bg: rgba(255,255,255,0.03);
+  --active-bg: rgba(255,255,255,0.06);
+}
+
 * {
   box-sizing: border-box;
 }

@@ -1,0 +1,12 @@
+<nav class="nav-rail">
+  @for (item of navItems; track item.tab) {
+    <button
+      class="nav-btn"
+      [class.active]="state.activeSidebarTab() === item.tab"
+      [title]="item.label"
+      (click)="onNavClick(item.tab)"
+    >
+      {{ item.icon }}
+    </button>
+  }
+</nav>
